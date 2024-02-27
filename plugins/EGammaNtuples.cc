@@ -54,7 +54,6 @@ private:
   void endJob() override;
 
   // ----------member data ---------------------------
-  edm::EDGetTokenT<TrackCollection> tracksToken_;  //used to select what tracks to read from configuration file
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
 #endif
@@ -71,8 +70,7 @@ private:
 //
 // constructors and destructor
 //
-EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
-    : tracksToken_(consumes<TrackCollection>(iConfig.getUntrackedParameter<edm::InputTag>("tracks"))) {
+EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig){
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
@@ -90,14 +88,16 @@ EGammaNtuples::~EGammaNtuples() {
 // member functions
 //
 
+
+
 // ------------ method called for each event  ------------
 void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
 
-  for (const auto& track : iEvent.get(tracksToken_)) {
-    // do something with track parameters, e.g, plot the charge.
-    // int charge = track.charge();
-  }
+  // Auxiliary Data
+  std::cout << "Run Nr: " << iEvent.eventAuxiliary().id().run() << std::endl;
+  std::cout << "LumiSec: " << iEvent.eventAuxiliary().id().luminosityBlock() << std::endl;
+  std::cout << "Event Nr: " << iEvent.eventAuxiliary().id().event() << std::endl;
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   // if the SetupData is always needed
