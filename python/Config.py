@@ -16,6 +16,8 @@ process.source = cms.Source("PoolSource",
 
 process.demo = cms.EDAnalyzer('EGammaNtuples',
     genParticles = cms.untracked.InputTag('genParticles'),
+    eGammaObjects = cms.untracked.InputTag('hltEgammaHLTExtra',""),
+    eGammaObjectsUnSeeded = cms.untracked.InputTag('hltEgammaHLTExtra',"Unseeded"),
 
                               )
 
