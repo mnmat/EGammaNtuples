@@ -57,6 +57,8 @@ private:
   void beginJob() override;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void endJob() override;
+  bool isEE(const reco::SuperCluster&);
+  bool isEB(const reco::SuperCluster&);
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
@@ -106,7 +108,21 @@ EGammaNtuples::~EGammaNtuples() {
 // member functions
 //
 
+bool EGammaNtuples::isEB(const reco::SuperCluster& sc){
+  bool eb = false;
+  if (sc.seed()->hitsAndFractions()[0].first.subdetId() == 1) {
+    eb = true;
+  } 
+  return eb;
+}
 
+bool EGammaNtuples::isEE(const reco::SuperCluster& sc){
+  bool ee = false;
+  if (sc.seed()->hitsAndFractions()[0].first.subdetId() == 2) {
+    ee = true;
+  } 
+  return ee;
+}
 
 // ------------ method called for each event  ------------
 void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -147,8 +163,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
     std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
-    std::cout << "isEb: " << sc.isEB() << std::endl;
-    std::cout << "isEE: " << sc.isEE() << std::endl;
+    std::cout << "isEb: " << isEB(sc) << std::endl;
+    std::cout << "isEE: " << isEE(sc) << std::endl;
   }
 
   std::cout << "----- SuperClusters: HGCAL, Unseeded  ----- " << std::endl;
@@ -159,8 +175,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
     std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
-    std::cout << "isEb: " << sc.isEB() << std::endl;
-    std::cout << "isEE: " << sc.isEE() << std::endl;
+    std::cout << "isEb: " << isEB(sc) << std::endl;
+    std::cout << "isEE: " << isEE(sc) << std::endl;
   }
 
 
