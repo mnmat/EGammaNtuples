@@ -62,6 +62,8 @@ private:
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
   edm::EDGetTokenT<std::vector<trigger::EgammaObject>> eGammaObjectToken_;
   edm::EDGetTokenT<std::vector<trigger::EgammaObject>> eGammaObjectUnseededToken_;
+  edm::EDGetTokenT<std::vector<reco::SuperCluster>> scBarrelL1SeededToken_;
+  edm::EDGetTokenT<std::vector<reco::SuperCluster>> scHGCalL1SeededToken_;
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -82,7 +84,11 @@ private:
 EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   : genParticleToken_(consumes<std::vector<reco::GenParticle>>(iConfig.getUntrackedParameter<edm::InputTag>("genParticles"))),
   eGammaObjectToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjects"))),
-  eGammaObjectUnseededToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjectsUnSeeded"))){
+  eGammaObjectUnseededToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjectsUnSeeded"))),
+  scBarrelL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scBarrelL1Seeded"))),
+  scHGCalL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scHGCalL1Seeded")))
+
+{
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
@@ -130,6 +136,34 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "Eta: "<< egobj.eta() << std::endl;
     std::cout << "Phi: "<< egobj.phi() << std::endl;
   }
+
+  // SuperCluster
+
+  std::cout << "----- SuperClusters: Barrel, L1Seeded ----- " << std::endl;
+  for (const auto& sc: iEvent.get(scBarrelL1SeededToken_)){
+    std::cout << "rawEnergy: " << sc.rawEnergy() << std::endl;
+    std::cout << "nrClus: " << sc.clusters().size() << std::endl;
+    std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
+    std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
+    std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
+    std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
+    std::cout << "isEb: " << sc.isEB() << std::endl;
+    std::cout << "isEE: " << sc.isEE() << std::endl;
+  }
+
+  std::cout << "----- SuperClusters: HGCAL, Unseeded  ----- " << std::endl;
+  for (const auto& sc: iEvent.get(scHGCalL1SeededToken_)){
+    std::cout << "rawEnergy: " << sc.rawEnergy() << std::endl;
+    std::cout << "nrClus: " << sc.clusters().size() << std::endl;
+    std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
+    std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
+    std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
+    std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
+    std::cout << "isEb: " << sc.isEB() << std::endl;
+    std::cout << "isEE: " << sc.isEE() << std::endl;
+  }
+
+
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   // if the SetupData is always needed
