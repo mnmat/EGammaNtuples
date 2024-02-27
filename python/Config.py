@@ -15,6 +15,8 @@ process.source = cms.Source("PoolSource",
                             )
 
 process.demo = cms.EDAnalyzer('EGammaNtuples',
+    genParticles = cms.untracked.InputTag('genParticles'),
+
                               )
 
 process.p = cms.Path(process.demo)
