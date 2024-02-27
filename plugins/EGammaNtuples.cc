@@ -34,6 +34,9 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HLTReco/interface/EgammaObject.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/DetId/interface/DetId.h"
+
+#include "DataFormats/Math/interface/deltaR.h"
 
 //
 // class declaration
@@ -59,6 +62,7 @@ private:
   void endJob() override;
   bool isEE(const reco::SuperCluster&);
   bool isEB(const reco::SuperCluster&);
+  float cal_cluster_maxdr(const reco::SuperCluster&);
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
@@ -107,6 +111,26 @@ EGammaNtuples::~EGammaNtuples() {
 //
 // member functions
 //
+
+float EGammaNtuples::cal_cluster_maxdr(const reco::SuperCluster& sc){
+  float max_dr2 = 0;
+  float seed_eta = sc.seed()->eta();
+  float seed_phi = sc.seed()->phi();
+  for(auto& c : sc.clusters()){
+    if (c == sc.seed()){
+      continue;
+    }
+    float dr2 = reco::deltaR2(c->eta(),c->phi(),seed_eta,seed_phi);
+    max_dr2 = std::max(max_dr2,dr2);
+  }
+
+  // ECAL takes 999. if no other cluster for maxDR2
+  if (max_dr2==0 && sc.seed()->seed().det()==DetId::Ecal){
+    return 999;
+  } else {
+    return std::sqrt(max_dr2);
+  }
+}
 
 bool EGammaNtuples::isEB(const reco::SuperCluster& sc){
   bool eb = false;
@@ -161,8 +185,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "nrClus: " << sc.clusters().size() << std::endl;
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
-    std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
+    std::cout << "clusterMaxDr: " << clusterMaxDr(sc) << std::endl;
+    std::cout << "r9Frac: " << r9Frac(sc) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
   }
@@ -173,8 +197,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "nrClus: " << sc.clusters().size() << std::endl;
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << sc.clusterMaxDr() << std::endl;
-    std::cout << "r9Frac: " << sc.r9Frac() << std::endl;
+    std::cout << "clusterMaxDr: " << clusterMaxDr(sc) << std::endl;
+    std::cout << "r9Frac: " << r9Frac(sc) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
   }
