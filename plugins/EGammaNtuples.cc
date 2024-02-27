@@ -30,6 +30,9 @@
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+
 //
 // class declaration
 //
@@ -54,6 +57,8 @@ private:
   void endJob() override;
 
   // ----------member data ---------------------------
+  edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
+
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
 #endif
@@ -70,7 +75,8 @@ private:
 //
 // constructors and destructor
 //
-EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig){
+EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
+  : genParticleToken_(consumes<std::vector<reco::GenParticle>>(iConfig.getUntrackedParameter<edm::InputTag>("genParticles"))){
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
@@ -95,9 +101,18 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   using namespace edm;
 
   // Auxiliary Data
+  std::cout << "----- Auxiliary Data ----- " << std::endl;
   std::cout << "Run Nr: " << iEvent.eventAuxiliary().id().run() << std::endl;
   std::cout << "LumiSec: " << iEvent.eventAuxiliary().id().luminosityBlock() << std::endl;
   std::cout << "Event Nr: " << iEvent.eventAuxiliary().id().event() << std::endl;
+
+  // Gen Particle
+  std::cout << "----- Gen Particles ----- " << std::endl;
+  for (const auto& gp: iEvent.get(genParticleToken_)){
+    std::cout << "Energy: " << gp.energy() << ", PT: " << gp.pt() << ", Eta: " << gp.eta() << ", Phi: " << gp.phi() << ", Vz: " << gp.vz() << std::endl;
+  }
+
+
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   // if the SetupData is always needed
