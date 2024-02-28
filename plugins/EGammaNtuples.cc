@@ -168,7 +168,7 @@ float EGammaNtuples::cal_cluster_maxdr(const reco::SuperCluster& sc){
   }
 
   // ECAL takes 999. if no other cluster for maxDR2
-  if (max_dr2==0 && sc.seed()->seed().det()==DetId::Ecal){
+  if (max_dr2==0 && (sc.seed()->seed().det()==DetId::Ecal || sc.seed()->seed().det()==DetId::HGCalEE)){
     return 999;
   } else {
     return std::sqrt(max_dr2);
@@ -185,7 +185,7 @@ bool EGammaNtuples::isEB(const reco::SuperCluster& sc){
 
 bool EGammaNtuples::isEE(const reco::SuperCluster& sc){
   bool ee = false;
-  if (sc.seed()->hitsAndFractions()[0].first.subdetId() == 2) {
+  if (sc.seed()->hitsAndFractions()[0].first.subdetId() == 0) {
     ee = true;
   } 
   return ee;
