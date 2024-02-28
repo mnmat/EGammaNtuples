@@ -22,21 +22,25 @@
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HLTReco/interface/EgammaObject.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/DetId/interface/DetId.h"
-
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/Math/interface/deltaR.h"
+
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
+
+#include "Geometry/CaloTopology/interface/CaloTopology.h"
+#include "Geometry/CaloTopology/interface/CaloSubdetectorTopology.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 
 //
 // class declaration
@@ -46,8 +50,6 @@
 // the template argument to the base class so the class inherits
 // from  edm::one::EDAnalyzer<>
 // This will improve performance in multithreaded jobs.
-
-using reco::TrackCollection;
 
 class EGammaNtuples : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 public:
@@ -63,6 +65,7 @@ private:
   bool isEE(const reco::SuperCluster&);
   bool isEB(const reco::SuperCluster&);
   float cal_cluster_maxdr(const reco::SuperCluster&);
+  float cal_r9(const reco::SuperCluster&, const EcalRecHitCollection&, const CaloTopology&);
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
@@ -70,6 +73,14 @@ private:
   edm::EDGetTokenT<std::vector<trigger::EgammaObject>> eGammaObjectUnseededToken_;
   edm::EDGetTokenT<std::vector<reco::SuperCluster>> scBarrelL1SeededToken_;
   edm::EDGetTokenT<std::vector<reco::SuperCluster>> scHGCalL1SeededToken_;
+  edm::EDGetTokenT<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>> ebRecHitsToken_;
+  edm::EDGetTokenT<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>> eeRecHitsToken_;
+  edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
+  edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
+
+  const CaloTopology* ecalTopology_;
+  const CaloGeometry* caloGeometry_;
+
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -92,9 +103,11 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   eGammaObjectToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjects"))),
   eGammaObjectUnseededToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjectsUnSeeded"))),
   scBarrelL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scBarrelL1Seeded"))),
-  scHGCalL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scHGCalL1Seeded")))
-
-{
+  scHGCalL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scHGCalL1Seeded"))),
+  ebRecHitsToken_(consumes<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("ebRecHits"))),
+  eeRecHitsToken_(consumes<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("eeRecHits"))),
+  caloGeomToken_(esConsumes<CaloGeometry, CaloGeometryRecord>()),
+  caloTopoToken_(esConsumes<CaloTopology, CaloTopologyRecord>()) {
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
@@ -111,6 +124,36 @@ EGammaNtuples::~EGammaNtuples() {
 //
 // member functions
 //
+
+
+float EGammaNtuples::cal_r9(const reco::SuperCluster& sc,
+                                    const EcalRecHitCollection& recHits,
+                                    const CaloTopology& topology){
+  auto &cluster = sc.seed();
+  float e3x3 = EcalClusterTools::e3x3(*cluster, &recHits, &topology);
+  return e3x3/sc.rawEnergy();
+}
+
+/*
+float EGammaNtuples::cal_r9(const reco::SuperCluster& sc, const edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>& hits){
+  
+  float seed_eta = sc.seed()->eta();
+  float seed_id = sc.seed()->seed().rawId();
+  if (seed_id.det()!=DetId::Ecal || sc.rawEnergy()==0){
+    return 0;
+  }
+  float e3x3 = 0;
+
+  seed_id = EBDetId(seed_id);
+  
+  for local_ieta
+  }
+}
+
+float EGammaNtuples::cal_r28(const reco::SuperCluster& sc, bool)
+
+*/
+
 
 float EGammaNtuples::cal_cluster_maxdr(const reco::SuperCluster& sc){
   float max_dr2 = 0;
@@ -152,6 +195,15 @@ bool EGammaNtuples::isEE(const reco::SuperCluster& sc){
 void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
 
+  edm::Handle<EcalRecHitCollection> ebRecHitsHandle;  
+  iEvent.getByToken(ebRecHitsToken_, ebRecHitsHandle);
+
+  edm::Handle<EcalRecHitCollection> eeRecHitsHandle;
+  iEvent.getByToken(eeRecHitsToken_, eeRecHitsHandle);
+
+  const CaloGeometry &geom = iSetup.getData(caloGeomToken_);
+  const CaloTopology &topo = iSetup.getData(caloTopoToken_);
+
   // Auxiliary Data
   std::cout << "----- Auxiliary Data ----- " << std::endl;
   std::cout << "Run Nr: " << iEvent.eventAuxiliary().id().run() << std::endl;
@@ -185,8 +237,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "nrClus: " << sc.clusters().size() << std::endl;
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << clusterMaxDr(sc) << std::endl;
-    std::cout << "r9Frac: " << r9Frac(sc) << std::endl;
+    std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
+    std::cout << "r9Frac: " << cal_r9(sc, *ebRecHitsHandle, topo) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
   }
@@ -197,8 +249,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "nrClus: " << sc.clusters().size() << std::endl;
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << clusterMaxDr(sc) << std::endl;
-    std::cout << "r9Frac: " << r9Frac(sc) << std::endl;
+    std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
+    std::cout << "r9Frac: " << cal_r9(sc, *eeRecHitsHandle, topo) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
   }
