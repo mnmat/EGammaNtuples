@@ -26,6 +26,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HLTReco/interface/EgammaObject.h"
@@ -41,6 +42,10 @@
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/Records/interface/CaloTopologyRecord.h"
+
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
+#include "TTree.h"
 
 //
 // class declaration
@@ -78,6 +83,32 @@ private:
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
 
+  TTree *tree = new TTree("tree","tree");
+
+  std::vector<int> run_nr;
+  std::vector<int> lumi_sec;
+  std::vector<int> event_nr;
+
+  std::vector<float> gen_energy;
+  std::vector<float> gen_pt;
+  std::vector<float> gen_eta;
+  std::vector<float> gen_phi;
+  std::vector<float> gen_vz;
+
+  std::vector<float> eg_energy;
+  std::vector<float> eg_et;
+  std::vector<float> eg_eta;
+  std::vector<float> eg_phi;
+
+  std::vector<float> sc_rawEnergy;
+  std::vector<int> sc_nrClus;
+  std::vector<int> sc_seedId;
+  std::vector<int> sc_seedDet;
+  std::vector<float> sc_clusterMaxDr;
+  std::vector<float> sc_r9;
+  std::vector<int> sc_isEB;
+  std::vector<int> sc_isEE; 
+
   const CaloTopology* ecalTopology_;
   const CaloGeometry* caloGeometry_;
 
@@ -112,6 +143,34 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
   //now do what ever initialization is needed
+
+  usesResource("TFileService");
+  edm::Service<TFileService> file;
+  tree = file->make<TTree>("tree","tree");
+
+  tree->Branch("run_nr", &run_nr);
+  tree->Branch("lumi_sec", &lumi_sec);
+  tree->Branch("event_nr", &event_nr);
+
+  tree->Branch("gen_energy", &gen_energy);
+  tree->Branch("gen_pt", &gen_pt);
+  tree->Branch("gen_eta", &gen_eta);
+  tree->Branch("gen_phi", &gen_phi);
+  tree->Branch("gen_vz", &gen_vz);
+
+  tree->Branch("eg_energy", &eg_energy);
+  tree->Branch("eg_et", &eg_et);
+  tree->Branch("eg_eta", &eg_eta);
+  tree->Branch("eg_phi", &eg_phi);
+
+  tree->Branch("sc_rawEnergy", &sc_rawEnergy);
+  tree->Branch("sc_nrClus", &sc_nrClus);
+  tree->Branch("sc_seedId", &sc_seedId);
+  tree->Branch("sc_seedDet", &sc_seedDet);
+  tree->Branch("sc_clusterMaxDr", &sc_clusterMaxDr);
+  tree->Branch("sc_r9", &sc_r9);
+  tree->Branch("sc_isEB", &sc_isEB);
+  tree->Branch("sc_isEE", &sc_isEE);
 }
 
 EGammaNtuples::~EGammaNtuples() {
@@ -210,6 +269,10 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   std::cout << "LumiSec: " << iEvent.eventAuxiliary().id().luminosityBlock() << std::endl;
   std::cout << "Event Nr: " << iEvent.eventAuxiliary().id().event() << std::endl;
 
+  run_nr.push_back(iEvent.eventAuxiliary().id().run());
+  run_nr.push_back(iEvent.eventAuxiliary().id().luminosityBlock());
+  run_nr.push_back(iEvent.eventAuxiliary().id().event());
+
   // Gen Particle
   std::cout << "----- Gen Particles ----- " << std::endl;
   for (const auto& gp: iEvent.get(genParticleToken_)){
@@ -218,6 +281,12 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "Eta: " << gp.eta() << std::endl;
     std::cout << "Phi: " << gp.phi() << std::endl;
     std::cout << "Vz: " << gp.vz() << std::endl;
+  
+    gen_energy.push_back(gp.energy());
+    gen_pt.push_back(gp.pt());
+    gen_eta.push_back(gp.eta());
+    gen_phi.push_back(gp.phi());
+    gen_vz.push_back(gp.vz());
   }
 
   // Eg Object
@@ -227,6 +296,11 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "ET: "<< egobj.et() << std::endl;
     std::cout << "Eta: "<< egobj.eta() << std::endl;
     std::cout << "Phi: "<< egobj.phi() << std::endl;
+
+    eg_energy.push_back(egobj.energy());
+    eg_et.push_back(egobj.et());
+    eg_eta.push_back(egobj.eta());
+    eg_phi.push_back(egobj.phi());
   }
 
   // SuperCluster
@@ -239,8 +313,17 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
     std::cout << "r9Frac: " << cal_r9(sc, *ebRecHitsHandle, topo) << std::endl;
-    std::cout << "isEb: " << isEB(sc) << std::endl;
+    std::cout << "isEB: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
+
+    sc_rawEnergy.push_back(sc.rawEnergy());
+    sc_nrClus.push_back(sc.clusters().size());
+    sc_seedId.push_back(sc.seed()->seed().rawId());
+    sc_seedDet.push_back(sc.seed()->seed().det());
+    sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
+    sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
+    sc_isEB.push_back(isEB(sc));
+    sc_isEE.push_back(isEE(sc));
   }
 
   std::cout << "----- SuperClusters: HGCAL, Unseeded  ----- " << std::endl;
@@ -253,6 +336,15 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "r9Frac: " << cal_r9(sc, *eeRecHitsHandle, topo) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
+
+    sc_rawEnergy.push_back(sc.rawEnergy());
+    sc_nrClus.push_back(sc.clusters().size());
+    sc_seedId.push_back(sc.seed()->seed().rawId());
+    sc_seedDet.push_back(sc.seed()->seed().det());
+    sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
+    sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
+    sc_isEB.push_back(isEB(sc));
+    sc_isEE.push_back(isEE(sc));
   }
 
 
@@ -273,6 +365,7 @@ void EGammaNtuples::beginJob() {
 // ------------ method called once each job just after ending the event loop  ------------
 void EGammaNtuples::endJob() {
   // please remove this method if not needed
+  tree->Write();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
