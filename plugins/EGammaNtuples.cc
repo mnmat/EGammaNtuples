@@ -33,6 +33,8 @@
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
+
 #include "DataFormats/Math/interface/deltaR.h"
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
@@ -79,7 +81,7 @@ private:
   edm::EDGetTokenT<std::vector<reco::SuperCluster>> scBarrelL1SeededToken_;
   edm::EDGetTokenT<std::vector<reco::SuperCluster>> scHGCalL1SeededToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>> ebRecHitsToken_;
-  edm::EDGetTokenT<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>> eeRecHitsToken_;
+  edm::EDGetTokenT<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit>>> eeRecHitsToken_;
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
 
@@ -112,7 +114,6 @@ private:
   const CaloTopology* ecalTopology_;
   const CaloGeometry* caloGeometry_;
 
-
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
 #endif
@@ -136,7 +137,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   scBarrelL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scBarrelL1Seeded"))),
   scHGCalL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scHGCalL1Seeded"))),
   ebRecHitsToken_(consumes<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("ebRecHits"))),
-  eeRecHitsToken_(consumes<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("eeRecHits"))),
+  eeRecHitsToken_(consumes<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("eeRecHits"))),
   caloGeomToken_(esConsumes<CaloGeometry, CaloGeometryRecord>()),
   caloTopoToken_(esConsumes<CaloTopology, CaloTopologyRecord>()) {
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
@@ -257,7 +258,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   edm::Handle<EcalRecHitCollection> ebRecHitsHandle;  
   iEvent.getByToken(ebRecHitsToken_, ebRecHitsHandle);
 
-  edm::Handle<EcalRecHitCollection> eeRecHitsHandle;
+  edm::Handle<HGCRecHitCollection> eeRecHitsHandle;
   iEvent.getByToken(eeRecHitsToken_, eeRecHitsHandle);
 
   const CaloGeometry &geom = iSetup.getData(caloGeomToken_);
@@ -324,6 +325,9 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
+
+    std::cout << "Nr. of Rechits: " << (*ebRecHitsHandle).size() << std::endl;
+
   }
 
   std::cout << "----- SuperClusters: HGCAL, Unseeded  ----- " << std::endl;
@@ -333,16 +337,18 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
-    std::cout << "r9Frac: " << cal_r9(sc, *eeRecHitsHandle, topo) << std::endl;
+    //std::cout << "r9Frac: " << cal_r9(sc, *eeRecHitsHandle, topo) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
+
+    std::cout << "Nr. of Rechits: " << (*eeRecHitsHandle).size() << std::endl;
 
     sc_rawEnergy.push_back(sc.rawEnergy());
     sc_nrClus.push_back(sc.clusters().size());
     sc_seedId.push_back(sc.seed()->seed().rawId());
     sc_seedDet.push_back(sc.seed()->seed().det());
     sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
-    sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
+    //sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
   }

@@ -10,7 +10,8 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.source = cms.Source("PoolSource",
                                 # replace 'myfile.root' with the source file you want to use
                                 fileNames = cms.untracked.vstring(
-            'file:/afs/cern.ch/work/m/mmatthew/private/egamma/CMSSW_13_1_0/src/tutorialDir/DoubleElectron_FlatPt-1To100-gun/hlt_IDEAL.root'
+            'file:/afs/cern.ch/work/m/mmatthew/private/egamma/CMSSW_13_1_0/src/Phase2_HLT.root'
+            #'file:/afs/cern.ch/work/m/mmatthew/private/egamma/CMSSW_13_1_0/src/tutorialDir/DoubleElectron_FlatPt-1To100-gun/hlt_IDEAL.root'
             #'file:/afs/cern.ch/work/m/mmatthew/private/deleteMe/CMSSW_13_1_0/src/Phase2_HLT.root'    
                 )
             )
@@ -27,7 +28,7 @@ process.demo = cms.EDAnalyzer('EGammaNtuples',
     scBarrelL1Seeded = cms.untracked.InputTag('hltParticleFlowSuperClusterECALL1Seeded','hltParticleFlowSuperClusterECALBarrel'),
     scHGCalL1Seeded = cms.untracked.InputTag('particleFlowSuperClusterHGCalFromTICLL1Seeded',''),
     ebRecHits = cms.untracked.InputTag('hltEgammaHLTExtra',"EcalRecHitsEB"),
-    eeRecHits = cms.untracked.InputTag('hltEgammaHLTExtra',"EcalRecHitsEE")
+    eeRecHits = cms.untracked.InputTag('HGCalRecHit',"HGCEERecHits")
                               )
 
 process.p = cms.Path(process.demo)
