@@ -7,4 +7,5 @@
 <use name="Geometry/CaloGeometry"/>
 <use name="FWCore/ServiceRegistry"/>
 <use name="CommonTools/UtilAlgos"/>
+<use name="RecoLocalCalo/HGCalRecAlgos"/>
 <flags EDM_PLUGIN="1"/>
