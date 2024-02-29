@@ -47,6 +47,8 @@
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
+
 #include "TTree.h"
 
 //
@@ -73,6 +75,10 @@ private:
   bool isEB(const reco::SuperCluster&);
   float cal_cluster_maxdr(const reco::SuperCluster&);
   float cal_r9(const reco::SuperCluster&, const EcalRecHitCollection&, const CaloTopology&);
+  float cal_r28(const reco::SuperCluster&);
+  virtual void fillHitMap(std::map<DetId, const HGCRecHit*>& hitMap, 
+      const HGCRecHitCollection& rechitsHGCEE) const;
+  std::vector<DetId> getNeighbors(const DetId, const float, const CaloSubdetectorGeometry*);
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
@@ -84,6 +90,12 @@ private:
   edm::EDGetTokenT<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit>>> eeRecHitsToken_;
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
+
+  const CaloTopology* ecalTopology_;
+  const CaloGeometry* caloGeometry_;
+  std::map<DetId, const HGCRecHit*> hitMap;
+
+  hgcal::RecHitTools recHitTools_;
 
   TTree *tree = new TTree("tree","tree");
 
@@ -110,9 +122,6 @@ private:
   std::vector<float> sc_r9;
   std::vector<int> sc_isEB;
   std::vector<int> sc_isEE; 
-
-  const CaloTopology* ecalTopology_;
-  const CaloGeometry* caloGeometry_;
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -185,6 +194,20 @@ EGammaNtuples::~EGammaNtuples() {
 // member functions
 //
 
+/*
+float EGammaNtuples::cal_r28(const reco::SuperCluster& sc,
+                                    const CaloSubdetectorGeometry* subGeom)
+
+  // Find seeds and collect RecHits in Cluster
+
+  // Loop over clusters
+
+    // get Neighbors from seed
+  
+    // add to e_28 and e
+
+  // return frac
+*/
 
 float EGammaNtuples::cal_r9(const reco::SuperCluster& sc,
                                     const EcalRecHitCollection& recHits,
@@ -193,6 +216,7 @@ float EGammaNtuples::cal_r9(const reco::SuperCluster& sc,
   float e3x3 = EcalClusterTools::e3x3(*cluster, &recHits, &topology);
   return e3x3/sc.rawEnergy();
 }
+
 
 /*
 float EGammaNtuples::cal_r9(const reco::SuperCluster& sc, const edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>& hits){
@@ -209,11 +233,87 @@ float EGammaNtuples::cal_r9(const reco::SuperCluster& sc, const edm::SortedColle
   for local_ieta
   }
 }
-
-float EGammaNtuples::cal_r28(const reco::SuperCluster& sc, bool)
-
 */
 
+float EGammaNtuples::cal_r28(const reco::SuperCluster& sc){
+    float e28 = 0;
+    float e = 0;
+    float dR = 2.8;
+    
+    auto clusters = sc.clusters();
+    for (auto& c : clusters){
+      std::map<int, std::vector<DetId>> v_detid;
+      std::vector<int> seedIds(47,0);
+      std::vector<float> maxEnergy(47,0);
+
+      // Find seeds of LCs
+      for (auto& hf : c->hitsAndFractions()){
+        auto h = hf.first;
+        auto f = hf.second;
+        int layer = recHitTools_.getLayerWithOffset(h) ;
+        std::map<DetId,const HGCRecHit *>::const_iterator itcheck = hitMap.find(h); 
+        if (itcheck != hitMap.end()){
+          v_detid[layer].push_back(h);
+          float energy = hitMap[h]->energy();
+          e+=energy;
+          if (maxEnergy[layer] < energy){
+            seedIds[layer] = h.rawId();
+            maxEnergy[layer] = energy;
+          }
+        }
+      }
+
+      // Collect cells in a given radius
+      for (auto& seedId: seedIds){
+        if (seedId==0) continue;
+        int layer = recHitTools_.getLayerWithOffset(seedId);
+        GlobalPoint p0 = recHitTools_.getPosition(seedId);
+        for (auto& h: v_detid[layer]){
+          GlobalPoint p =  recHitTools_.getPosition(h);
+          float dist = std::sqrt((p0.x()-p.x())*(p0.x()-p.x()) + (p0.y()-p.y())*(p0.y()-p.y()) + (p0.z()-p.z())*(p0.z()-p.z()));
+          if (dist<dR){
+            e28 += hitMap[h]->energy();
+          }
+        }
+      }
+    }
+  return e28/e;
+}
+
+
+std::vector<DetId> EGammaNtuples::getNeighbors(const DetId seedId, const float dR, const CaloSubdetectorGeometry* subGeom){
+
+  const GlobalPoint pos = recHitTools_.getPosition(seedId);
+  const int layer = recHitTools_.getLayerWithOffset(seedId);
+  const int zside = recHitTools_.zside(seedId);
+  const double dR2 = dR * dR;
+  const double eta = pos.eta();
+  const double phi = pos.phi();
+
+  std::vector<DetId> neighbors;
+  if (0.000001 < dR) {
+    for (auto id : subGeom->getValidDetIds()) {
+      const GlobalPoint& p = recHitTools_.getPosition(id);
+      const int l = recHitTools_.getLayerWithOffset(id);
+      if (l != layer && recHitTools_.zside(id)==zside) continue;
+      const float eta0 = p.eta();
+      if (fabs(eta - eta0) < dR) {
+        const float phi0 = p.phi();
+        float delp =fabs(phi - phi0);
+        if (delp > M_PI)
+          delp = 2 * M_PI - delp;
+        if (delp < dR) {
+          const float dist2 = reco::deltaR2(eta0, phi0, eta, phi);
+          if (dist2 < dR2){
+            neighbors.push_back(id);
+            //dss.insert(m_validIds[i]);
+          }
+        }
+      }
+    }
+  }
+  return neighbors;
+}
 
 float EGammaNtuples::cal_cluster_maxdr(const reco::SuperCluster& sc){
   float max_dr2 = 0;
@@ -251,6 +351,14 @@ bool EGammaNtuples::isEE(const reco::SuperCluster& sc){
   return ee;
 }
 
+void EGammaNtuples::fillHitMap(std::map<DetId, const HGCRecHit*>& hitMap,
+                                const HGCRecHitCollection& rechitsHGCEE) const {
+  hitMap.clear();
+  for (const auto& hit : rechitsHGCEE) {
+    hitMap.emplace(hit.detid(), &hit);
+  }
+} // end of EfficiencyStudies::fillHitMap
+
 // ------------ method called for each event  ------------
 void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
@@ -263,6 +371,12 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   const CaloGeometry &geom = iSetup.getData(caloGeomToken_);
   const CaloTopology &topo = iSetup.getData(caloTopoToken_);
+
+  recHitTools_.setGeometry(geom);
+  int hgcalEEId = DetId::HGCalEE;
+  const CaloSubdetectorGeometry *subGeom = geom.getSubdetectorGeometry(DetId::Detector(hgcalEEId), ForwardSubdetector::ForwardEmpty);
+
+  fillHitMap(hitMap, *eeRecHitsHandle);
 
   // Auxiliary Data
   std::cout << "----- Auxiliary Data ----- " << std::endl;
@@ -337,18 +451,17 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
-    //std::cout << "r9Frac: " << cal_r9(sc, *eeRecHitsHandle, topo) << std::endl;
+    std::cout << "r28Frac: " << cal_r28(sc) << std::endl;
     std::cout << "isEb: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
 
     std::cout << "Nr. of Rechits: " << (*eeRecHitsHandle).size() << std::endl;
-
     sc_rawEnergy.push_back(sc.rawEnergy());
     sc_nrClus.push_back(sc.clusters().size());
     sc_seedId.push_back(sc.seed()->seed().rawId());
     sc_seedDet.push_back(sc.seed()->seed().det());
     sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
-    //sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
+    sc_r9.push_back(cal_r28(sc));
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
   }
