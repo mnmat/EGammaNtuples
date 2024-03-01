@@ -34,7 +34,7 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
-
+#include "DataFormats/RecoCandidate/interface/RecoEcalCandidateIsolation.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
@@ -46,6 +46,7 @@
 #include "Geometry/Records/interface/CaloTopologyRecord.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
+
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
@@ -88,8 +89,15 @@ private:
   edm::EDGetTokenT<std::vector<reco::SuperCluster>> scHGCalL1SeededToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>> ebRecHitsToken_;
   edm::EDGetTokenT<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit>>> eeRecHitsToken_;
+  edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaToken_;
+  edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiToken_;
+  edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaNoiseCleanedToken_;
+  edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiNoiseCleanedToken_;
+  edm::EDGetTokenT<int> nrHitsEB1GeVToken_;
+  edm::EDGetTokenT<int> nrHitsEE1GeVToken_;
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
+
 
   const CaloTopology* ecalTopology_;
   const CaloGeometry* caloGeometry_;
@@ -102,6 +110,9 @@ private:
   std::vector<int> run_nr;
   std::vector<int> lumi_sec;
   std::vector<int> event_nr;
+
+  std::vector<int> nrHitsEB1GeV;
+  std::vector<int> nrHitsEE1GeV;
 
   std::vector<float> gen_energy;
   std::vector<float> gen_pt;
@@ -147,6 +158,12 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   scHGCalL1SeededToken_(consumes<std::vector<reco::SuperCluster>>(iConfig.getUntrackedParameter<edm::InputTag>("scHGCalL1Seeded"))),
   ebRecHitsToken_(consumes<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("ebRecHits"))),
   eeRecHitsToken_(consumes<edm::SortedCollection<HGCRecHit,edm::StrictWeakOrdering<HGCRecHit>>>(iConfig.getUntrackedParameter<edm::InputTag>("eeRecHits"))),
+  sigmaIEtaIEtaToken_(consumes<reco::RecoEcalCandidateIsolationMap> (iConfig.getUntrackedParameter<edm::InputTag>("sigmaIEtaIEta"))),
+  sigmaIPhiIPhiToken_(consumes<reco::RecoEcalCandidateIsolationMap> (iConfig.getUntrackedParameter<edm::InputTag>("sigmaIPhiIPhi"))),
+  sigmaIEtaIEtaNoiseCleanedToken_(consumes<reco::RecoEcalCandidateIsolationMap> (iConfig.getUntrackedParameter<edm::InputTag>("sigmaIEtaIEtaNoiseCleaned"))),
+  sigmaIPhiIPhiNoiseCleanedToken_(consumes<reco::RecoEcalCandidateIsolationMap> (iConfig.getUntrackedParameter<edm::InputTag>("sigmaIPhiIPhiNoiseCleaned"))),
+  nrHitsEB1GeVToken_(consumes<int>(iConfig.getUntrackedParameter<edm::InputTag>("nrHitsEB1GeV"))),
+  nrHitsEE1GeVToken_(consumes<int>(iConfig.getUntrackedParameter<edm::InputTag>("nrHitsEE1GeV"))),
   caloGeomToken_(esConsumes<CaloGeometry, CaloGeometryRecord>()),
   caloTopoToken_(esConsumes<CaloTopology, CaloTopologyRecord>()) {
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
@@ -158,29 +175,43 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   edm::Service<TFileService> file;
   tree = file->make<TTree>("tree","tree");
 
-  tree->Branch("run_nr", &run_nr);
-  tree->Branch("lumi_sec", &lumi_sec);
-  tree->Branch("event_nr", &event_nr);
+  tree->Branch("runnr", &run_nr);
+  tree->Branch("lumiSec", &lumi_sec);
+  tree->Branch("eventnr", &event_nr);
+
+  tree->Branch("nrHitsEB1GeV", &nrHitsEB1GeV);
+  tree->Branch("nrHitsEE1GeV", &nrHitsEE1GeV);  
+  
+  tree->Branch("eg_et", &eg_et);
+  tree->Branch("eg_energy", &eg_energy);
+  tree->Branch("eg_rawEnergy", &sc_rawEnergy);
+  tree->Branch("eg_eta", &eg_eta);
+  tree->Branch("eg_phi", &eg_phi);
+  /*
+  tree->Branch("eg_phiWidth", &eg_phiWidth);
+  */
+  tree->Branch("eg_nrClus", &sc_nrClus);
+  tree->Branch("eg_seedId", &sc_seedId);
+  tree->Branch("eg_seedDet", &sc_seedDet);
+  /*
+  tree->Branch("eg_sigmaIEtaIEta", &eg_sigmaIEtaIEta);
+  tree->Branch("eg_sigmaIPhiIPhi", &eg_sigmaIPhiIPhi);
+  tree->Branch("eg_sigmaIEtaIEtaNoise", &eg_sigmaIEtaIEtaNoise);
+  tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoise);
+  */
+  tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr);
+  tree->Branch("eg_r9Frac", &sc_r9);
+  /*
+  tree->Branch("eg_r9Full", &eg_r9Full);
+  */
+  tree->Branch("sc_isEB", &sc_isEB);
+  tree->Branch("sc_isEE", &sc_isEE);
 
   tree->Branch("gen_energy", &gen_energy);
   tree->Branch("gen_pt", &gen_pt);
   tree->Branch("gen_eta", &gen_eta);
   tree->Branch("gen_phi", &gen_phi);
   tree->Branch("gen_vz", &gen_vz);
-
-  tree->Branch("eg_energy", &eg_energy);
-  tree->Branch("eg_et", &eg_et);
-  tree->Branch("eg_eta", &eg_eta);
-  tree->Branch("eg_phi", &eg_phi);
-
-  tree->Branch("sc_rawEnergy", &sc_rawEnergy);
-  tree->Branch("sc_nrClus", &sc_nrClus);
-  tree->Branch("sc_seedId", &sc_seedId);
-  tree->Branch("sc_seedDet", &sc_seedDet);
-  tree->Branch("sc_clusterMaxDr", &sc_clusterMaxDr);
-  tree->Branch("sc_r9", &sc_r9);
-  tree->Branch("sc_isEB", &sc_isEB);
-  tree->Branch("sc_isEE", &sc_isEE);
 }
 
 EGammaNtuples::~EGammaNtuples() {
@@ -388,6 +419,12 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   run_nr.push_back(iEvent.eventAuxiliary().id().luminosityBlock());
   run_nr.push_back(iEvent.eventAuxiliary().id().event());
 
+  // NrHits
+
+  std::cout << "------ Nr Hits -------------" << std::endl;
+  std::cout << "nrHitsEB1GeV: " << iEvent.get(nrHitsEB1GeVToken_) << std::endl;
+  std::cout << "nrHitsEE1GeV: " << iEvent.get(nrHitsEE1GeVToken_) << std::endl;
+
   // Gen Particle
   std::cout << "----- Gen Particles ----- " << std::endl;
   for (const auto& gp: iEvent.get(genParticleToken_)){
@@ -411,6 +448,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "ET: "<< egobj.et() << std::endl;
     std::cout << "Eta: "<< egobj.eta() << std::endl;
     std::cout << "Phi: "<< egobj.phi() << std::endl;
+    //std::cout << "PhiWidth: " << egobj.phiWidth() << std::endl;
 
     eg_energy.push_back(egobj.energy());
     eg_et.push_back(egobj.et());
@@ -465,7 +503,6 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
   }
-
 
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
