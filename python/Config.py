@@ -28,7 +28,14 @@ process.demo = cms.EDAnalyzer('EGammaNtuples',
     scBarrelL1Seeded = cms.untracked.InputTag('hltParticleFlowSuperClusterECALL1Seeded','hltParticleFlowSuperClusterECALBarrel'),
     scHGCalL1Seeded = cms.untracked.InputTag('particleFlowSuperClusterHGCalFromTICLL1Seeded',''),
     ebRecHits = cms.untracked.InputTag('hltEgammaHLTExtra',"EcalRecHitsEB"),
-    eeRecHits = cms.untracked.InputTag('HGCalRecHit',"HGCEERecHits")
+    eeRecHits = cms.untracked.InputTag('HGCalRecHit',"HGCEERecHits"),
+    sigmaIEtaIEta = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5'),
+    sigmaIPhiIPhi = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5'),
+    sigmaIEtaIEtaNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5NoiseCleaned'),
+    sigmaIPhiIPhiNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5NoiseCleaned'),
+    nrHitsEB1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsEcalRecHitsEBThres1GeV"),
+    nrHitsEE1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsHGCalRecHitsThres1GeV"),
+
                               )
 
 process.p = cms.Path(process.demo)
