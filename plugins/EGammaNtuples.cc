@@ -209,7 +209,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoiseCleaned);
   tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr);
   tree->Branch("eg_r9Frac", &sc_r9Frac);
-  tree->Branch("eg_r9Full", &eg_r9Full);
+  tree->Branch("eg_r9Full", &sc_r9Full);
   tree->Branch("sc_isEB", &sc_isEB);
   tree->Branch("sc_isEE", &sc_isEE);
 
@@ -511,7 +511,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
     std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
     std::cout << "r9Frac: " << cal_r9(sc, *ebRecHitsHandle, topo,true) << std::endl;
-    std::cout << "r9Full: " << cal_r9(sc, *ebRecHitsHandle, topo,false) << std::endl;=
+    std::cout << "r9Full: " << cal_r9(sc, *ebRecHitsHandle, topo,false) << std::endl;
     std::cout << "isEB: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
     std::cout << "PhiWidth: " << sc.phiWidth() << std::endl;
@@ -551,7 +551,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     sc_seedDet.push_back(sc.seed()->seed().det());
     sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
     sc_r9Frac.push_back(cal_r28(sc,true));
-    sc_r9Full.push_back(cal_r28(sc,frac));
+    sc_r9Full.push_back(cal_r28(sc,false));
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
   }
