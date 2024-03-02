@@ -142,6 +142,7 @@ private:
   std::vector<float> sc_r9;
   std::vector<int> sc_isEB;
   std::vector<int> sc_isEE; 
+  std::vector<float> sc_phiWidth; 
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -197,9 +198,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   tree->Branch("eg_rawEnergy", &sc_rawEnergy);
   tree->Branch("eg_eta", &eg_eta);
   tree->Branch("eg_phi", &eg_phi);
-  /*
-  tree->Branch("eg_phiWidth", &eg_phiWidth);
-  */
+  tree->Branch("eg_phiWidth", &sc_phiWidth);
   tree->Branch("eg_nrClus", &sc_nrClus);
   tree->Branch("eg_seedId", &sc_seedId);
   tree->Branch("eg_seedDet", &sc_seedDet);
@@ -472,7 +471,6 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "ET: "<< egobj.et() << std::endl;
     std::cout << "Eta: "<< egobj.eta() << std::endl;
     std::cout << "Phi: "<< egobj.phi() << std::endl;
-    //std::cout << "PhiWidth: " << egobj.phiWidth() << std::endl;
 
     eg_energy.push_back(egobj.energy());
     eg_et.push_back(egobj.et());
@@ -508,6 +506,8 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     std::cout << "r9Frac: " << cal_r9(sc, *ebRecHitsHandle, topo) << std::endl;
     std::cout << "isEB: " << isEB(sc) << std::endl;
     std::cout << "isEE: " << isEE(sc) << std::endl;
+    std::cout << "PhiWidth: " << sc.phiWidth() << std::endl;
+
 
     sc_rawEnergy.push_back(sc.rawEnergy());
     sc_nrClus.push_back(sc.clusters().size());
@@ -517,6 +517,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     sc_r9.push_back(cal_r9(sc, *ebRecHitsHandle, topo));
     sc_isEB.push_back(isEB(sc));
     sc_isEE.push_back(isEE(sc));
+    sc_phiWidth.push_back(sc.phiWidth());
 
     std::cout << "Nr. of Rechits: " << (*ebRecHitsHandle).size() << std::endl;
 
