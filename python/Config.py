@@ -30,11 +30,12 @@ process.demo = cms.EDAnalyzer('EGammaNtuples',
     ebRecHits = cms.untracked.InputTag('hltEgammaHLTExtra',"EcalRecHitsEB"),
     eeRecHits = cms.untracked.InputTag('HGCalRecHit',"HGCEERecHits"),
     sigmaIEtaIEta = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5'),
-    sigmaIPhiIPhi = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5'),
+    sigmaIPhiIPhi = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIPhiIPhi5x5'),
     sigmaIEtaIEtaNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5NoiseCleaned'),
-    sigmaIPhiIPhiNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5NoiseCleaned'),
+    sigmaIPhiIPhiNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIPhiIPhi5x5NoiseCleaned'),
     nrHitsEB1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsEcalRecHitsEBThres1GeV"),
     nrHitsEE1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsHGCalRecHitsThres1GeV"),
+    eGammaCandidates = cms.untracked.InputTag('hltEgammaCandidatesL1Seeded')
 
                               )
 
