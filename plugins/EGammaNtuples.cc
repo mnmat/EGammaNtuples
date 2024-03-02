@@ -35,7 +35,10 @@
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/RecoCandidate/interface/RecoEcalCandidateIsolation.h"
+#include "DataFormats/RecoCandidate/interface/RecoEcalCandidate.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/RecoCandidate/interface/RecoEcalCandidateFwd.h"
+#include "DataFormats/Common/interface/getRef.h"
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 
@@ -46,7 +49,6 @@
 #include "Geometry/Records/interface/CaloTopologyRecord.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
@@ -95,6 +97,8 @@ private:
   edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiNoiseCleanedToken_;
   edm::EDGetTokenT<int> nrHitsEB1GeVToken_;
   edm::EDGetTokenT<int> nrHitsEE1GeVToken_;
+  edm::EDGetTokenT<std::vector<reco::RecoEcalCandidate>> eGammaCandidatesToken_;
+
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
 
@@ -113,6 +117,11 @@ private:
 
   std::vector<int> nrHitsEB1GeV;
   std::vector<int> nrHitsEE1GeV;
+
+  std::vector<float> eg_sigmaIEtaIEta;
+  std::vector<float> eg_sigmaIPhiIPhi;
+  std::vector<float> eg_sigmaIEtaIEtaNoiseCleaned;
+  std::vector<float> eg_sigmaIPhiIPhiNoiseCleaned;
 
   std::vector<float> gen_energy;
   std::vector<float> gen_pt;
@@ -164,6 +173,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   sigmaIPhiIPhiNoiseCleanedToken_(consumes<reco::RecoEcalCandidateIsolationMap> (iConfig.getUntrackedParameter<edm::InputTag>("sigmaIPhiIPhiNoiseCleaned"))),
   nrHitsEB1GeVToken_(consumes<int>(iConfig.getUntrackedParameter<edm::InputTag>("nrHitsEB1GeV"))),
   nrHitsEE1GeVToken_(consumes<int>(iConfig.getUntrackedParameter<edm::InputTag>("nrHitsEE1GeV"))),
+  eGammaCandidatesToken_(consumes<std::vector<reco::RecoEcalCandidate>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaCandidates"))),
   caloGeomToken_(esConsumes<CaloGeometry, CaloGeometryRecord>()),
   caloTopoToken_(esConsumes<CaloTopology, CaloTopologyRecord>()) {
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
@@ -193,12 +203,10 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   tree->Branch("eg_nrClus", &sc_nrClus);
   tree->Branch("eg_seedId", &sc_seedId);
   tree->Branch("eg_seedDet", &sc_seedDet);
-  /*
   tree->Branch("eg_sigmaIEtaIEta", &eg_sigmaIEtaIEta);
   tree->Branch("eg_sigmaIPhiIPhi", &eg_sigmaIPhiIPhi);
-  tree->Branch("eg_sigmaIEtaIEtaNoise", &eg_sigmaIEtaIEtaNoise);
-  tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoise);
-  */
+  tree->Branch("eg_sigmaIEtaIEtaNoise", &eg_sigmaIEtaIEtaNoiseCleaned);
+  tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoiseCleaned);
   tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr);
   tree->Branch("eg_r9Frac", &sc_r9);
   /*
@@ -407,6 +415,22 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   int hgcalEEId = DetId::HGCalEE;
   const CaloSubdetectorGeometry *subGeom = geom.getSubdetectorGeometry(DetId::Detector(hgcalEEId), ForwardSubdetector::ForwardEmpty);
 
+
+  edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaHandle;
+  iEvent.getByToken(sigmaIEtaIEtaToken_,sigmaIEtaIEtaHandle);
+  edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiHandle;
+  iEvent.getByToken(sigmaIPhiIPhiToken_,sigmaIPhiIPhiHandle);
+  edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaNoiseCleanedHandle;
+  iEvent.getByToken(sigmaIEtaIEtaNoiseCleanedToken_,sigmaIEtaIEtaNoiseCleanedHandle);
+  edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiNoiseCleanedHandle;
+  iEvent.getByToken(sigmaIPhiIPhiNoiseCleanedToken_,sigmaIPhiIPhiNoiseCleanedHandle);
+
+  edm::Handle<std::vector<reco::RecoEcalCandidate>> eGammaCandidatesHandle;
+  iEvent.getByToken(eGammaCandidatesToken_,eGammaCandidatesHandle);
+
+  std::cout << "EgammaCandidates size:" << (*eGammaCandidatesHandle).size() << std::endl;
+  std::cout << "ValueMap size:" << (*sigmaIEtaIEtaHandle).size() << std::endl;
+
   fillHitMap(hitMap, *eeRecHitsHandle);
 
   // Auxiliary Data
@@ -455,6 +479,22 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     eg_eta.push_back(egobj.eta());
     eg_phi.push_back(egobj.phi());
   }
+
+  // Sigma
+  std::cout << "----- Sigma Variables -----" << std::endl;
+  for (int i = 0; i<static_cast<int>((*eGammaCandidatesHandle).size());i++){
+    reco::RecoEcalCandidateRef candidateRef = getRef(eGammaCandidatesHandle, i);
+    std::cout << (*sigmaIEtaIEtaHandle)[candidateRef] << std::endl;
+    std::cout << (*sigmaIPhiIPhiHandle)[candidateRef] << std::endl;
+    std::cout << (*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef] << std::endl;
+    std::cout << (*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef] << std::endl;
+
+    eg_sigmaIEtaIEta.push_back((*sigmaIEtaIEtaHandle)[candidateRef]);
+    eg_sigmaIPhiIPhi.push_back((*sigmaIPhiIPhiHandle)[candidateRef]);
+    eg_sigmaIEtaIEtaNoiseCleaned.push_back((*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef]);
+    eg_sigmaIPhiIPhi.push_back((*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef]);
+  }
+  //auto mapIt = valueMapHandles->find(candidateRef);
 
   // SuperCluster
 
