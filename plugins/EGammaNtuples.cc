@@ -109,7 +109,7 @@ private:
 
   hgcal::RecHitTools recHitTools_;
 
-  TTree *tree = new TTree("tree","tree");
+  TTree *tree = new TTree("egHLTRun3Tree","egHLTRun3Tree");
 
   std::vector<int> run_nr;
   std::vector<int> lumi_sec;
@@ -185,7 +185,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
 
   usesResource("TFileService");
   edm::Service<TFileService> file;
-  tree = file->make<TTree>("tree","tree");
+  tree = file->make<TTree>("egHLTRun3Tree","egHLTRun3Tree");
 
   tree->Branch("runnr", &run_nr);
   tree->Branch("lumiSec", &lumi_sec);
