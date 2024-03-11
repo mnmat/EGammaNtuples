@@ -112,39 +112,39 @@ private:
   TFile *newfile = new TFile("output.root", "RECREATE","",207);
   TTree *tree = new TTree("egHLTRun3Tree","egHLTRun3Tree");
 
-  std::vector<int> run_nr;
-  std::vector<int> lumi_sec;
-  std::vector<int> event_nr;
+  int run_nr;
+  int lumi_sec;
+  int event_nr;
 
-  std::vector<int> nrHitsEB1GeV;
-  std::vector<int> nrHitsEE1GeV;
+  int nrHitsEB1GeV;
+  int nrHitsEE1GeV;
 
-  std::vector<float> eg_sigmaIEtaIEta;
-  std::vector<float> eg_sigmaIPhiIPhi;
-  std::vector<float> eg_sigmaIEtaIEtaNoiseCleaned;
-  std::vector<float> eg_sigmaIPhiIPhiNoiseCleaned;
+  float eg_sigmaIEtaIEta;
+  float eg_sigmaIPhiIPhi;
+  float eg_sigmaIEtaIEtaNoiseCleaned;
+  float eg_sigmaIPhiIPhiNoiseCleaned;
 
-  std::vector<float> gen_energy;
-  std::vector<float> gen_pt;
-  std::vector<float> gen_eta;
-  std::vector<float> gen_phi;
-  std::vector<float> gen_vz;
+  float gen_energy;
+  float gen_pt;
+  float gen_eta;
+  float gen_phi;
+  float gen_vz;
 
-  std::vector<float> eg_energy;
-  std::vector<float> eg_et;
-  std::vector<float> eg_eta;
-  std::vector<float> eg_phi;
+  float eg_energy;
+  float eg_et;
+  float eg_eta;
+  float eg_phi;
 
-  std::vector<float> sc_rawEnergy;
-  std::vector<int> sc_nrClus;
-  std::vector<int> sc_seedId;
-  std::vector<int> sc_seedDet;
-  std::vector<float> sc_clusterMaxDr;
-  std::vector<float> sc_r9Frac;
-  std::vector<float> sc_r9Full;
-  std::vector<int> sc_isEB;
-  std::vector<int> sc_isEE; 
-  std::vector<float> sc_phiWidth; 
+  float sc_rawEnergy;
+  int sc_nrClus;
+  int sc_seedId;
+  int sc_seedDet;
+  float sc_clusterMaxDr;
+  float sc_r9Frac;
+  float sc_r9Full;
+  int sc_isEB;
+  int sc_isEE; 
+  float sc_phiWidth; 
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -421,13 +421,15 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   int hgcalEEId = DetId::HGCalEE;
   const CaloSubdetectorGeometry *subGeom = geom.getSubdetectorGeometry(DetId::Detector(hgcalEEId), ForwardSubdetector::ForwardEmpty);
 
-
   edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaHandle;
   iEvent.getByToken(sigmaIEtaIEtaToken_,sigmaIEtaIEtaHandle);
+
   edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiHandle;
   iEvent.getByToken(sigmaIPhiIPhiToken_,sigmaIPhiIPhiHandle);
+
   edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaNoiseCleanedHandle;
   iEvent.getByToken(sigmaIEtaIEtaNoiseCleanedToken_,sigmaIEtaIEtaNoiseCleanedHandle);
+
   edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIPhiIPhiNoiseCleanedHandle;
   iEvent.getByToken(sigmaIPhiIPhiNoiseCleanedToken_,sigmaIPhiIPhiNoiseCleanedHandle);
 
@@ -439,121 +441,103 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   fillHitMap(hitMap, *eeRecHitsHandle);
 
-  // Auxiliary Data
-  std::cout << "----- Auxiliary Data ----- " << std::endl;
-  std::cout << "Run Nr: " << iEvent.eventAuxiliary().id().run() << std::endl;
-  std::cout << "LumiSec: " << iEvent.eventAuxiliary().id().luminosityBlock() << std::endl;
-  std::cout << "Event Nr: " << iEvent.eventAuxiliary().id().event() << std::endl;
+  // Objects
+  const auto& egObjects = iEvent.get(eGammaObjectToken_);
+  const auto& gPs =  iEvent.get(genParticleToken_);
+  const auto& bScs = iEvent.get(scBarrelL1SeededToken_);
+  const auto& eScs = iEvent.get(scHGCalL1SeededToken_);
 
-  run_nr.push_back(iEvent.eventAuxiliary().id().run());
-  run_nr.push_back(iEvent.eventAuxiliary().id().luminosityBlock());
-  run_nr.push_back(iEvent.eventAuxiliary().id().event());
+  std::cout << "Size bScs: " << bScs.size() << std::endl;
+  std::cout << "Size eScs: " << eScs.size() << std::endl;
 
-  // NrHits
+  std::vector<reco::SuperCluster> scs(bScs.size() + eScs.size()); 
+  std::merge(bScs.begin(), bScs.end(), eScs.begin(), eScs.end(), scs.begin());
 
-  std::cout << "------ Nr Hits -------------" << std::endl;
-  std::cout << "nrHitsEB1GeV: " << iEvent.get(nrHitsEB1GeVToken_) << std::endl;
-  std::cout << "nrHitsEE1GeV: " << iEvent.get(nrHitsEE1GeVToken_) << std::endl;
+  std::cout << "egObjs: " << egObjects.size() << ", gPs: " << gPs.size() << ", bScs: " << bScs.size() << ", eScs: " << eScs.size() << std::endl;
 
-  // Gen Particle
-  std::cout << "----- Gen Particles ----- " << std::endl;
-  for (const auto& gp: iEvent.get(genParticleToken_)){
-    std::cout << "Energy: " << gp.energy() << std::endl;
-    std::cout << "PT: " << gp.pt() << std::endl;
-    std::cout << "Eta: " << gp.eta() << std::endl;
-    std::cout << "Phi: " << gp.phi() << std::endl;
-    std::cout << "Vz: " << gp.vz() << std::endl;
-  
-    gen_energy.push_back(gp.energy());
-    gen_pt.push_back(gp.pt());
-    gen_eta.push_back(gp.eta());
-    gen_phi.push_back(gp.phi());
-    gen_vz.push_back(gp.vz());
-  }
+  if (egObjects.size() == 2 && gPs.size() == 2 && scs.size()){
+    for (int i = 0; i<static_cast<int>((*eGammaCandidatesHandle).size());i++){
+      // Auxiliary Data
+      std::cout << "----- Auxiliary Data ----- " << std::endl;
+      std::cout << "Run Nr: " << iEvent.eventAuxiliary().id().run() << std::endl;
+      std::cout << "LumiSec: " << iEvent.eventAuxiliary().id().luminosityBlock() << std::endl;
+      std::cout << "Event Nr: " << iEvent.eventAuxiliary().id().event() << std::endl;
 
-  // Eg Object
-  std::cout << "----- Egamma Particles ----- " << std::endl;
-  for (const auto& egobj: iEvent.get(eGammaObjectToken_)){
-    std::cout << "Energy: " << egobj.energy() << std::endl;
-    std::cout << "ET: "<< egobj.et() << std::endl;
-    std::cout << "Eta: "<< egobj.eta() << std::endl;
-    std::cout << "Phi: "<< egobj.phi() << std::endl;
+      run_nr = iEvent.eventAuxiliary().id().run();
+      lumi_sec = iEvent.eventAuxiliary().id().luminosityBlock();
+      event_nr = iEvent.eventAuxiliary().id().event();
 
-    eg_energy.push_back(egobj.energy());
-    eg_et.push_back(egobj.et());
-    eg_eta.push_back(egobj.eta());
-    eg_phi.push_back(egobj.phi());
-  }
+      // NrHits
+      std::cout << "------ Nr Hits -------------" << std::endl;
+      std::cout << "nrHitsEB1GeV: " << iEvent.get(nrHitsEB1GeVToken_) << std::endl;
+      std::cout << "nrHitsEE1GeV: " << iEvent.get(nrHitsEE1GeVToken_) << std::endl;
 
-  // Sigma
-  std::cout << "----- Sigma Variables -----" << std::endl;
-  for (int i = 0; i<static_cast<int>((*eGammaCandidatesHandle).size());i++){
-    reco::RecoEcalCandidateRef candidateRef = getRef(eGammaCandidatesHandle, i);
-    std::cout << (*sigmaIEtaIEtaHandle)[candidateRef] << std::endl;
-    std::cout << (*sigmaIPhiIPhiHandle)[candidateRef] << std::endl;
-    std::cout << (*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef] << std::endl;
-    std::cout << (*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef] << std::endl;
+      // Gen Particle
+      std::cout << "----- Gen Particles ----- " << std::endl;
+      std::cout << "Energy: " << gPs[i].energy() << std::endl;
+      std::cout << "PT: " << gPs[i].pt() << std::endl;
+      std::cout << "Eta: " << gPs[i].eta() << std::endl;
+      std::cout << "Phi: " << gPs[i].phi() << std::endl;
+      std::cout << "Vz: " << gPs[i].vz() << std::endl;
 
-    eg_sigmaIEtaIEta.push_back((*sigmaIEtaIEtaHandle)[candidateRef]);
-    eg_sigmaIPhiIPhi.push_back((*sigmaIPhiIPhiHandle)[candidateRef]);
-    eg_sigmaIEtaIEtaNoiseCleaned.push_back((*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef]);
-    eg_sigmaIPhiIPhi.push_back((*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef]);
-  }
-  //auto mapIt = valueMapHandles->find(candidateRef);
+      gen_energy = gPs[i].energy();
+      gen_pt = gPs[i].pt();
+      gen_eta = gPs[i].eta();
+      gen_phi = gPs[i].phi();
+      gen_vz = gPs[i].vz();
+      
+      // Eg Object
+      std::cout << "----- Egamma Particles ----- " << std::endl;
+      std::cout << "Energy: " << egObjects[i].energy() << std::endl;
+      std::cout << "ET: "<< egObjects[i].et() << std::endl;
+      std::cout << "Eta: "<< egObjects[i].eta() << std::endl;
+      std::cout << "Phi: "<< egObjects[i].phi() << std::endl;
 
-  // SuperCluster
+      eg_energy = egObjects[i].energy();
+      eg_et = egObjects[i].et();
+      eg_eta = egObjects[i].eta();
+      eg_phi = egObjects[i].phi();
 
-  std::cout << "----- SuperClusters: Barrel, L1Seeded ----- " << std::endl;
-  for (const auto& sc: iEvent.get(scBarrelL1SeededToken_)){
-    std::cout << "rawEnergy: " << sc.rawEnergy() << std::endl;
-    std::cout << "nrClus: " << sc.clusters().size() << std::endl;
-    std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
-    std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
-    std::cout << "r9Frac: " << cal_r9(sc, *ebRecHitsHandle, topo,true) << std::endl;
-    std::cout << "r9Full: " << cal_r9(sc, *ebRecHitsHandle, topo,false) << std::endl;
-    std::cout << "isEB: " << isEB(sc) << std::endl;
-    std::cout << "isEE: " << isEE(sc) << std::endl;
-    std::cout << "PhiWidth: " << sc.phiWidth() << std::endl;
+      // Sigma
+      std::cout << "----- Sigma Variables -----" << std::endl;
+      reco::RecoEcalCandidateRef candidateRef = getRef(eGammaCandidatesHandle, i);
+      std::cout << (*sigmaIEtaIEtaHandle)[candidateRef] << std::endl;
+      std::cout << (*sigmaIPhiIPhiHandle)[candidateRef] << std::endl;
+      std::cout << (*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef] << std::endl;
+      std::cout << (*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef] << std::endl;
 
+      eg_sigmaIEtaIEta = (*sigmaIEtaIEtaHandle)[candidateRef];
+      eg_sigmaIPhiIPhi = (*sigmaIPhiIPhiHandle)[candidateRef];
+      eg_sigmaIEtaIEtaNoiseCleaned = (*sigmaIEtaIEtaNoiseCleanedHandle)[candidateRef];
+      eg_sigmaIPhiIPhi = (*sigmaIPhiIPhiNoiseCleanedHandle)[candidateRef];
+      //auto mapIt = valueMapHandles->find(candidateRef);
 
-    sc_rawEnergy.push_back(sc.rawEnergy());
-    sc_nrClus.push_back(sc.clusters().size());
-    sc_seedId.push_back(sc.seed()->seed().rawId());
-    sc_seedDet.push_back(sc.seed()->seed().det());
-    sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
-    sc_r9Frac.push_back(cal_r9(sc, *ebRecHitsHandle, topo,true));
-    sc_r9Full.push_back(cal_r9(sc, *ebRecHitsHandle, topo,false));
-    sc_isEB.push_back(isEB(sc));
-    sc_isEE.push_back(isEE(sc));
-    sc_phiWidth.push_back(sc.phiWidth());
+      // SuperCluster
+      std::cout << "----- SuperClusters: Barrel, L1Seeded ----- " << std::endl;
+      std::cout << "rawEnergy: " << scs[i].rawEnergy() << std::endl;
+      std::cout << "nrClus: " << scs[i].clusters().size() << std::endl;
+      std::cout << "seedId: " << scs[i].seed()->seed().rawId() << std::endl;
+      std::cout << "seedDet: " << scs[i].seed()->seed().det() << std::endl;
+      std::cout << "clusterMaxDr: " << cal_cluster_maxdr(scs[i]) << std::endl;
+      std::cout << "r9Frac: " << cal_r9(scs[i], *ebRecHitsHandle, topo,true) << std::endl;
+      std::cout << "r9Full: " << cal_r9(scs[i], *ebRecHitsHandle, topo,false) << std::endl;
+      std::cout << "isEB: " << isEB(scs[i]) << std::endl;
+      std::cout << "isEE: " << isEE(scs[i]) << std::endl;
+      std::cout << "PhiWidth: " << scs[i].phiWidth() << std::endl;
 
-    std::cout << "Nr. of Rechits: " << (*ebRecHitsHandle).size() << std::endl;
-
-  }
-
-  std::cout << "----- SuperClusters: HGCAL, Unseeded  ----- " << std::endl;
-  for (const auto& sc: iEvent.get(scHGCalL1SeededToken_)){
-    std::cout << "rawEnergy: " << sc.rawEnergy() << std::endl;
-    std::cout << "nrClus: " << sc.clusters().size() << std::endl;
-    std::cout << "seedId: " << sc.seed()->seed().rawId() << std::endl;
-    std::cout << "seedDet: " << sc.seed()->seed().det() << std::endl;
-    std::cout << "clusterMaxDr: " << cal_cluster_maxdr(sc) << std::endl;
-    std::cout << "r28Frac: " << cal_r28(sc,true) << std::endl;
-    std::cout << "r28Full: " << cal_r28(sc,false) << std::endl;
-    std::cout << "isEb: " << isEB(sc) << std::endl;
-    std::cout << "isEE: " << isEE(sc) << std::endl;
-
-    std::cout << "Nr. of Rechits: " << (*eeRecHitsHandle).size() << std::endl;
-    sc_rawEnergy.push_back(sc.rawEnergy());
-    sc_nrClus.push_back(sc.clusters().size());
-    sc_seedId.push_back(sc.seed()->seed().rawId());
-    sc_seedDet.push_back(sc.seed()->seed().det());
-    sc_clusterMaxDr.push_back(cal_cluster_maxdr(sc));
-    sc_r9Frac.push_back(cal_r28(sc,true));
-    sc_r9Full.push_back(cal_r28(sc,false));
-    sc_isEB.push_back(isEB(sc));
-    sc_isEE.push_back(isEE(sc));
+      sc_rawEnergy = scs[i].rawEnergy();
+      sc_nrClus = scs[i].clusters().size();
+      sc_seedId = scs[i].seed()->seed().rawId();
+      sc_seedDet = scs[i].seed()->seed().det();
+      sc_clusterMaxDr = cal_cluster_maxdr(scs[i]);
+      sc_r9Frac = cal_r9(scs[i], *ebRecHitsHandle, topo,true);
+      sc_r9Full = cal_r9(scs[i], *ebRecHitsHandle, topo,false);
+      sc_isEB = isEB(scs[i]);
+      sc_isEE = isEE(scs[i]);
+      sc_phiWidth = scs[i].phiWidth();
+      std::cout << "Nr. of Rechits: " << (*ebRecHitsHandle).size() << std::endl;
+      tree->Fill();
+    }
   }
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
@@ -572,7 +556,6 @@ void EGammaNtuples::beginJob() {
 // ------------ method called once each job just after ending the event loop  ------------
 void EGammaNtuples::endJob() {
   // please remove this method if not needed
-  tree->Fill();
   tree->Write();
 }
 
