@@ -17,7 +17,7 @@ process.source = cms.Source("PoolSource",
             )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("output.root"),
+                                   fileName = cms.string("/afs/cern.ch/work/m/mmatthew/private/egamma/CMSSW_13_1_0/src/tutorialDir/DoubleElectron_FlatPt-1To100-gun/s4Flat/HLTAnalyzerTree_IDEAL_Flat.root"),
                                    closeFileFast = cms.untracked.bool(True)
                                )
 
