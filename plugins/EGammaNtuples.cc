@@ -187,37 +187,37 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   edm::Service<TFileService> file;
   tree = file->make<TTree>("egHLTRun3Tree","egHLTRun3Tree");
 
-  tree->Branch("runnr", &run_nr);
-  tree->Branch("lumiSec", &lumi_sec);
-  tree->Branch("eventnr", &event_nr);
+  tree->Branch("runnr", &run_nr,"runnr/I");
+  tree->Branch("lumiSec", &lumi_sec,"lumiSec/I");
+  tree->Branch("eventnr", &event_nr,"eventnr/I");
 
-  tree->Branch("nrHitsEB1GeV", &nrHitsEB1GeV);
-  tree->Branch("nrHitsEE1GeV", &nrHitsEE1GeV);  
+  tree->Branch("nrHitsEB1GeV", &nrHitsEB1GeV,"nrHitsEB1GeV/F");
+  tree->Branch("nrHitsEE1GeV", &nrHitsEE1GeV,"nrHitsEE1GeV/F");  
   
-  tree->Branch("eg_et", &eg_et);
-  tree->Branch("eg_energy", &eg_energy);
-  tree->Branch("eg_rawEnergy", &sc_rawEnergy);
-  tree->Branch("eg_eta", &eg_eta);
-  tree->Branch("eg_phi", &eg_phi);
-  tree->Branch("eg_phiWidth", &sc_phiWidth);
-  tree->Branch("eg_nrClus", &sc_nrClus);
-  tree->Branch("eg_seedId", &sc_seedId);
-  tree->Branch("eg_seedDet", &sc_seedDet);
-  tree->Branch("eg_sigmaIEtaIEta", &eg_sigmaIEtaIEta);
-  tree->Branch("eg_sigmaIPhiIPhi", &eg_sigmaIPhiIPhi);
-  tree->Branch("eg_sigmaIEtaIEtaNoise", &eg_sigmaIEtaIEtaNoiseCleaned);
-  tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoiseCleaned);
-  tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr);
-  tree->Branch("eg_r9Frac", &sc_r9Frac);
-  tree->Branch("eg_r9Full", &sc_r9Full);
-  tree->Branch("sc_isEB", &sc_isEB);
-  tree->Branch("sc_isEE", &sc_isEE);
+  tree->Branch("eg_et", &eg_et, "eg_et/F");
+  tree->Branch("eg_energy", &eg_energy, "eg_energy/F");
+  tree->Branch("eg_rawEnergy", &sc_rawEnergy,  "eg_rawEnergy/F");
+  tree->Branch("eg_eta", &eg_eta,  "eg_eta/F");
+  tree->Branch("eg_phi", &eg_phi,  "eg_phi/F");
+  tree->Branch("eg_phiWidth", &sc_phiWidth,  "eg_phiWidth/F");
+  tree->Branch("eg_nrClus", &sc_nrClus,  "eg_nrClus/F");
+  tree->Branch("eg_seedId", &sc_seedId,  "eg_seedId/F");
+  tree->Branch("eg_seedDet", &sc_seedDet,  "eg_seedDet/F");
+  tree->Branch("eg_sigmaIEtaIEta", &eg_sigmaIEtaIEta,  "eg_sigmaIEtaIEta/F");
+  tree->Branch("eg_sigmaIPhiIPhi", &eg_sigmaIPhiIPhi,  "eg_sigmaIPhiIPhi/F");
+  tree->Branch("eg_sigmaIEtaIEtaNoise", &eg_sigmaIEtaIEtaNoiseCleaned,  "eg_sigmaIEtaIEtaNoise/F");
+  tree->Branch("eg_sigmaIPhiIPhiNoise", &eg_sigmaIPhiIPhiNoiseCleaned,  "eg_sigmaIPhiIPhiNoise/F");
+  tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr,  "eg_clusterMaxDR/F");
+  tree->Branch("eg_r9Frac", &sc_r9Frac,  "eg_r9Frac/F");
+  tree->Branch("eg_r9Full", &sc_r9Full,  "eg_r9Full/F");
+  tree->Branch("sc_isEB", &sc_isEB,  "eg_isEB/F");
+  tree->Branch("sc_isEE", &sc_isEE,  "eg_isEE/F");
 
-  tree->Branch("gen_energy", &gen_energy);
-  tree->Branch("gen_pt", &gen_pt);
-  tree->Branch("gen_eta", &gen_eta);
-  tree->Branch("gen_phi", &gen_phi);
-  tree->Branch("gen_vz", &gen_vz);
+  tree->Branch("gen_energy", &gen_energy,  "eg_gen_energy/F");
+  tree->Branch("gen_pt", &gen_pt,  "eg_gen_pt/F");
+  tree->Branch("gen_eta", &gen_eta,  "eg_gen_eta/F");
+  tree->Branch("gen_phi", &gen_phi,  "eg_gen_phi/F");
+  tree->Branch("gen_vz", &gen_vz,  "eg_gen_vz/F");
 }
 
 EGammaNtuples::~EGammaNtuples() {
