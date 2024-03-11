@@ -210,14 +210,14 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   tree->Branch("eg_clusterMaxDR", &sc_clusterMaxDr);
   tree->Branch("eg_r9Frac", &sc_r9Frac);
   tree->Branch("eg_r9Full", &sc_r9Full);
-  tree->Branch("sc_isEB", &sc_isEB);
-  tree->Branch("sc_isEE", &sc_isEE);
+  tree->Branch("eg_isEB", &sc_isEB);
+  tree->Branch("eg_isEE", &sc_isEE);
 
-  tree->Branch("gen_energy", &gen_energy);
-  tree->Branch("gen_pt", &gen_pt);
-  tree->Branch("gen_eta", &gen_eta);
-  tree->Branch("gen_phi", &gen_phi);
-  tree->Branch("gen_vz", &gen_vz);
+  tree->Branch("eg_gen_energy", &gen_energy);
+  tree->Branch("eg_gen_pt", &gen_pt);
+  tree->Branch("eg_gen_eta", &gen_eta);
+  tree->Branch("eg_gen_phi", &gen_phi);
+  tree->Branch("eg_gen_vz", &gen_vz);
 }
 
 EGammaNtuples::~EGammaNtuples() {
