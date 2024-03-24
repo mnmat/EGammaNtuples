@@ -30,7 +30,10 @@ process.demo = cms.EDAnalyzer('EGammaNtuples',
     sigmaIPhiIPhiNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIPhiIPhi5x5NoiseCleaned'),
     nrHitsEB1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsEcalRecHitsEBThres1GeV"),
     nrHitsEE1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsHGCalRecHitsThres1GeV"),
-    eGammaCandidates = cms.untracked.InputTag('hltEgammaCandidatesL1Seeded')
+    eGammaCandidates = cms.untracked.InputTag('hltEgammaCandidatesL1Seeded'),
+    vertices = cms.untracked.InputTag("offlinePrimaryVertices"),
+    pfHGCALRecHits = cms.untracked.InputTag("particleFlowRecHitHGC"),
+
 
                               )
 
