@@ -5,9 +5,6 @@ def customiseHLTForEGammaNtuples(process):
 
     process.EGammaNtuples = EGammaNtuples.clone()
 
-    process.TFileService = cms.Service("TFileService",
-                                       fileName=cms.string("output.root")
-                                       )
     process.FEVTDEBUGHLToutput_step = cms.EndPath(
         process.FEVTDEBUGHLToutput + process.EGammaNtuples)
     return process
