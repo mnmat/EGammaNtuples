@@ -170,11 +170,12 @@ private:
   edm::Handle<reco::VertexCollection> vertices_;
 
   
-  TTree* egRun3Tree; 
-  TTree* egRegDataEcalV1Tree;
-  TTree* egRegDataEcalHLTV1Tree;
-  TTree* egRegDataHGCALV1Tree;
-  TTree* egRegDataHGCALHLTV1Tree;
+  TFile *newfile = new TFile("output.root", "RECREATE","",207);
+  TTree* egRun3Tree = new TTree("egHLTRun3Tree","egHLTRun3Tree");
+  TTree* egRegDataEcalV1Tree = new TTree("egRegDataEcalV1","egRegDataEcalV1");
+  TTree* egRegDataEcalHLTV1Tree = new TTree("egRegDataEcalHLTV1","egRegDataEcalHLTV1");
+  TTree* egRegDataHGCALV1Tree = new TTree("egRegDataHGCALV1","egRegDataHGCALV1");
+  TTree* egRegDataHGCALHLTV1Tree = new TTree("egRegDataHGCALHLTV1","egRegDataHGCALHLTV1");
 
   // egRun3Tree
 
@@ -964,12 +965,6 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
 // ------------ method called once each job just before starting event loop  ------------
 void EGammaNtuples::beginJob() {
-  edm::Service<TFileService> fs;
-  egRun3Tree = fs->make<TTree>("egRun3Tree", "egRun3Tree"); 
-  egRegDataEcalV1Tree = fs->make<TTree>("egRegDataEcalV1","egRegDataEcalV1");
-  egRegDataEcalHLTV1Tree = fs->make<TTree>("egRegDataEcalHLTV1","egRegDataEcalHLTV1");
-  egRegDataHGCALV1Tree = fs->make<TTree>("egRegDataHGCALV1","egRegDataHGCALV1");
-  egRegDataHGCALHLTV1Tree = fs->make<TTree>("egRegDataHGCALHLTV1","egRegDataHGCALHLTV1");
 
   // egRun3Tree
   egRun3Tree->Branch("runnr", &run_nr);
@@ -1100,11 +1095,11 @@ void EGammaNtuples::beginJob() {
 // ------------ method called once each job just after ending the event loop  ------------
 void EGammaNtuples::endJob() {
   // please remove this method if not needed
-  //egRegDataEcalHLTV1Tree->Write();
-  //egRegDataEcalV1Tree->Write();
-  //egRegDataHGCALHLTV1Tree->Write();
-  //egRegDataHGCALV1Tree->Write();
-  //egRun3Tree->Write();
+  egRegDataEcalHLTV1Tree->Write();
+  egRegDataEcalV1Tree->Write();
+  egRegDataHGCALHLTV1Tree->Write();
+  egRegDataHGCALV1Tree->Write();
+  egRun3Tree->Write();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
