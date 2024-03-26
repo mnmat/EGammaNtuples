@@ -1095,6 +1095,7 @@ void EGammaNtuples::beginJob() {
 // ------------ method called once each job just after ending the event loop  ------------
 void EGammaNtuples::endJob() {
   // please remove this method if not needed
+  newfile->cd();
   egRun3Tree->Write();
   egRegDataEcalV1Tree->Write();
   egRegDataEcalHLTV1Tree->Write();
