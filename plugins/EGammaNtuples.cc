@@ -1095,11 +1095,11 @@ void EGammaNtuples::beginJob() {
 // ------------ method called once each job just after ending the event loop  ------------
 void EGammaNtuples::endJob() {
   // please remove this method if not needed
-  egRegDataEcalHLTV1Tree->Write();
-  egRegDataEcalV1Tree->Write();
-  egRegDataHGCALHLTV1Tree->Write();
-  egRegDataHGCALV1Tree->Write();
   egRun3Tree->Write();
+  egRegDataEcalV1Tree->Write();
+  egRegDataEcalHLTV1Tree->Write();
+  egRegDataHGCALV1Tree->Write();
+  egRegDataHGCALHLTV1Tree->Write();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
