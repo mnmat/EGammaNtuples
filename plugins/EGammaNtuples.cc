@@ -928,7 +928,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   nrHitsEE1GeV = countRecHits(eeRecHitsHandle, hitsEnergyThreshold_);
   iEvent.getByToken(verticesToken_, vertices_);
 
-  if (gPs.size() == 2 && scs.size()){
+  if (gPs.size() == 2 && scs.size()==2){
     int i = 0;
     for (auto& sc: bScs){
       fillRegDataEcalV1(sc,*ebRecHitsHandle,gPs[i]);
