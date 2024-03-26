@@ -1100,6 +1100,7 @@ void EGammaNtuples::endJob() {
   egRegDataEcalHLTV1Tree->Write();
   egRegDataHGCALV1Tree->Write();
   egRegDataHGCALHLTV1Tree->Write();
+  newfile->Close();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
