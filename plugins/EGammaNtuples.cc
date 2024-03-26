@@ -927,13 +927,6 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   nrHitsEB1GeV = countRecHits(ebRecHitsHandle, hitsEnergyThreshold_);
   nrHitsEE1GeV = countRecHits(eeRecHitsHandle, hitsEnergyThreshold_);
   iEvent.getByToken(verticesToken_, vertices_);
-  std::cout << "Done with initialization" << std::endl;
-  
-  for (auto& pfRecHit:*pfRecHitsHGCALHandle){
-    std::cout << pfRecHit.energy() << std::endl;
-    std::cout << pfRecHit.hasCaloCell() << std::endl;
-  }
-
 
   if (gPs.size() == 2 && scs.size()){
     int i = 0;
