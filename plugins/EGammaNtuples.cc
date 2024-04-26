@@ -204,6 +204,7 @@ private:
   float eg_phi;
 
   float sc_rawEnergy;
+  float sc_regressedEnergy;
   int sc_nrClus;
   int sc_seedId;
   int sc_seedDet;
@@ -227,6 +228,7 @@ private:
   float ecalV1_sigmaIEtaIPhi;
 
   float ecalV1_rawEnergy;
+  float ecalV1_regressedEnergy;
   int ecalV1_nrVert;
   float ecalV1_etaWidth;
   float ecalV1_phiWidth;
@@ -266,6 +268,7 @@ private:
   int ecalHLTV1_event_nr;
 
   float ecalHLTV1_rawEnergy;
+  float ecalHLTV1_regressedEnergy;
   float ecalHLTV1_phiWidth; 
   float ecalHLTV1_eta;
   float ecalHLTV1_rvar;
@@ -287,6 +290,7 @@ private:
   int hgcalV1_event_nr; 
 
   float hgcalV1_rawEnergy;
+  float hgcalV1_regressedEnergy;
   float hgcalV1_eta;
   float hgcalV1_etaWidth;
   float hgcalV1_phiWidth;
@@ -316,6 +320,7 @@ private:
   int hgcalHLTV1_event_nr; 
 
   float hgcalHLTV1_rawEnergy;
+  float hgcalHLTV1_regressedEnergy;
   float hgcalHLTV1_eta;
   float hgcalHLTV1_phiWidth;
   int hgcalHLTV1_numberOfSubClusters;
@@ -511,6 +516,7 @@ void EGammaNtuples::fillRegDataEGRun3Tree(const edm::Event& iEvent, const edm::E
       std::cout << "PhiWidth: " << scs[i].phiWidth() << std::endl;
 
       sc_rawEnergy = scs[i].rawEnergy();
+      sc_regressedEnergy = scs[i].energy();
       sc_nrClus = scs[i].clusters().size();
       sc_seedId = scs[i].seed()->seed().rawId();
       sc_seedDet = scs[i].seed()->seed().det();
@@ -533,6 +539,7 @@ void EGammaNtuples::fillRegDataEcalV1(const reco::SuperCluster& sc,  const EcalR
   //const EcalRecHitCollection* recHits = iseb ? recHitsEB_.product() : recHitsEE_.product();
 
   const double raw_energy = sc.rawEnergy();
+  const double regressed_energy = sc.energy();
   const int numberOfClusters = sc.clusters().size();
 
   const auto& localCovariances = EcalClusterTools::localCovariances(seedCluster, &recHits, caloTopology_);
@@ -601,6 +608,7 @@ void EGammaNtuples::fillRegDataEcalV1(const reco::SuperCluster& sc,  const EcalR
 
   ecalV1_nrVert = vertices_->size();
   ecalV1_rawEnergy = raw_energy;
+  ecalV1_regressedEnergy = regressed_energy;
   ecalV1_etaWidth = sc.etaWidth();
   ecalV1_phiWidth = sc.phiWidth();
   ecalV1_rvar = EcalClusterTools::e3x3(seedCluster, &recHits, caloTopology_) / raw_energy;
@@ -665,6 +673,7 @@ void EGammaNtuples::fillRegDataEcalHLTV1(const reco::SuperCluster& sc,const Ecal
   ecalHLTV1_numberOfSubClusters = std::max(0, static_cast<int>(sc.clusters().size()) - 1);
   ecalHLTV1_clusterMaxDR = clusterMaxDR;
   ecalHLTV1_rawEnergy = sc.rawEnergy();
+  ecalHLTV1_regressedEnergy = sc.energy();
 
   ecalHLTV1_gen_energy = gPs.energy();
   ecalHLTV1_gen_pt = gPs.pt();
@@ -688,6 +697,7 @@ void EGammaNtuples::fillRegDataHGCALV1(const reco::SuperCluster& sc, const reco:
   const float clusterMaxDR = maxDRNonSeedClus.first ? maxDRNonSeedClus.second : 999.;
 
   hgcalV1_rawEnergy = sc.rawEnergy();
+  hgcalV1_regressedEnergy = sc.energy();
   hgcalV1_eta = sc.eta();
   hgcalV1_etaWidth = sc.etaWidth();
   hgcalV1_phiWidth = sc.phiWidth();
@@ -718,13 +728,14 @@ void EGammaNtuples::fillRegDataHGCALHLTV1(const reco::SuperCluster& sc, const re
   const float clusterMaxDR = getMaxDRNonSeedCluster(sc).second;
   auto ssCalc = hgcalShowerShapes_.createCalc(sc);
 
-  hgcalHLTV1_nrHitsThreshold = sc.rawEnergy();
+  hgcalHLTV1_nrHitsThreshold = nrHitsEB1GeV + nrHitsEE1GeV;
   hgcalHLTV1_eta = sc.eta();
   hgcalHLTV1_phiWidth = sc.phiWidth();
   hgcalHLTV1_numberOfSubClusters = std::max(0, static_cast<int>(sc.clusters().size()) - 1);
   hgcalHLTV1_rvar = ssCalc.getRvar(hgcalCylinderR_);
   hgcalHLTV1_clusterMaxDR = clusterMaxDR;
-  hgcalHLTV1_rawEnergy = nrHitsEB1GeV + nrHitsEE1GeV;
+  hgcalHLTV1_rawEnergy = sc.rawEnergy();
+  hgcalHLTV1_regressedEnergy = sc.energy();
 
   hgcalHLTV1_gen_energy = gPs.energy();
   hgcalHLTV1_gen_pt = gPs.pt();
@@ -933,6 +944,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for (auto& sc: bScs){
       fillRegDataEcalV1(sc,*ebRecHitsHandle,gPs[i]);
       fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,gPs[i]);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
       i++;
     }
     std::cout << "Done with ECAL trees" << std::endl;
@@ -940,6 +952,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for (auto& sc: eScs){
       fillRegDataHGCALV1(sc, gPs[i]); 
       fillRegDataHGCALHLTV1(sc,gPs[i]);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
       i++;
     }
 
@@ -969,6 +982,7 @@ void EGammaNtuples::beginJob() {
   
   egRun3Tree->Branch("eg_et", &eg_et);
   egRun3Tree->Branch("eg_energy", &eg_energy);
+  egRun3Tree->Branch("eg_regressedEnergy", &sc_regressedEnergy);
   egRun3Tree->Branch("eg_rawEnergy", &sc_rawEnergy);
   egRun3Tree->Branch("eg_eta", &eg_eta);
   egRun3Tree->Branch("eg_phi", &eg_phi);
@@ -995,6 +1009,7 @@ void EGammaNtuples::beginJob() {
   // egRegDataEcalV1Tree
   egRegDataEcalV1Tree->Branch("nrVert", &ecalV1_nrVert);
   egRegDataEcalV1Tree->Branch("rawEnergy", &ecalV1_rawEnergy);
+  egRegDataEcalV1Tree->Branch("regressedEnergy", &ecalV1_regressedEnergy);
   egRegDataEcalV1Tree->Branch("etaWidth", &ecalV1_etaWidth);
   egRegDataEcalV1Tree->Branch("phiWidth", &ecalV1_phiWidth);
   egRegDataEcalV1Tree->Branch("rvar", &ecalV1_rvar);
@@ -1033,6 +1048,7 @@ void EGammaNtuples::beginJob() {
   egRegDataEcalHLTV1Tree->Branch("nrHitsThreshold", &ecalHLTV1_nrHitsThreshold);
   egRegDataEcalHLTV1Tree->Branch("eta", &ecalHLTV1_eta);
   egRegDataEcalHLTV1Tree->Branch("rawEnergy", &ecalHLTV1_rawEnergy);
+  egRegDataEcalHLTV1Tree->Branch("regressedEnergy", &ecalHLTV1_regressedEnergy);
   egRegDataEcalHLTV1Tree->Branch("phiWidth", &ecalHLTV1_phiWidth);
   egRegDataEcalHLTV1Tree->Branch("rvar", &ecalHLTV1_rvar);
   egRegDataEcalHLTV1Tree->Branch("numberOfSubClusters", &ecalHLTV1_numberOfSubClusters);
@@ -1045,6 +1061,7 @@ void EGammaNtuples::beginJob() {
 
   // egRegDataHGCALV1Tree
   egRegDataHGCALV1Tree->Branch("rawEnergy", &hgcalV1_rawEnergy);
+  egRegDataHGCALV1Tree->Branch("regressedEnergy", &hgcalV1_regressedEnergy);
   egRegDataHGCALV1Tree->Branch("eta", &hgcalV1_eta);
   egRegDataHGCALV1Tree->Branch("etaWidth", &hgcalV1_etaWidth);
   egRegDataHGCALV1Tree->Branch("phiWidth", &hgcalV1_phiWidth);
@@ -1069,6 +1086,7 @@ void EGammaNtuples::beginJob() {
 
  // egRegDataHGCALHLTV1Tree
   egRegDataHGCALHLTV1Tree->Branch("rawEnergy", &hgcalHLTV1_rawEnergy);
+  egRegDataHGCALHLTV1Tree->Branch("regressedEnergy", &hgcalHLTV1_regressedEnergy);
   egRegDataHGCALHLTV1Tree->Branch("eta", &hgcalHLTV1_eta);
   egRegDataHGCALHLTV1Tree->Branch("phiWidth", &hgcalHLTV1_phiWidth);
   egRegDataHGCALHLTV1Tree->Branch("numberOfSubClusters", &hgcalHLTV1_numberOfSubClusters);
