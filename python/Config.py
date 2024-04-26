@@ -16,25 +16,6 @@ process.source = cms.Source("PoolSource",
                 )
             )
 
-process.demo = cms.EDAnalyzer('EGammaNtuples',
-    genParticles = cms.untracked.InputTag('genParticles'),
-    eGammaObjects = cms.untracked.InputTag('hltEgammaHLTExtra',""),
-    eGammaObjectsUnSeeded = cms.untracked.InputTag('hltEgammaHLTExtra',"Unseeded"),
-    scBarrelL1Seeded = cms.untracked.InputTag('hltParticleFlowSuperClusterECALL1Seeded','hltParticleFlowSuperClusterECALBarrel'),
-    scHGCalL1Seeded = cms.untracked.InputTag('particleFlowSuperClusterHGCalFromTICLL1Seeded',''),
-    ebRecHits = cms.untracked.InputTag('hltEgammaHLTExtra',"EcalRecHitsEB"),
-    eeRecHits = cms.untracked.InputTag('HGCalRecHit',"HGCEERecHits"),
-    sigmaIEtaIEta = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5'),
-    sigmaIPhiIPhi = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIPhiIPhi5x5'),
-    sigmaIEtaIEtaNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIEtaIEta5x5NoiseCleaned'),
-    sigmaIPhiIPhiNoiseCleaned = cms.untracked.InputTag('hltEgammaClusterShapeL1Seeded','sigmaIPhiIPhi5x5NoiseCleaned'),
-    nrHitsEB1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsEcalRecHitsEBThres1GeV"),
-    nrHitsEE1GeV = cms.untracked.InputTag('hltEgammaHLTExtra',"countEcalRecHitsHGCalRecHitsThres1GeV"),
-    eGammaCandidates = cms.untracked.InputTag('hltEgammaCandidatesL1Seeded'),
-    vertices = cms.untracked.InputTag("offlinePrimaryVertices"),
-    pfHGCALRecHits = cms.untracked.InputTag("particleFlowRecHitHGC"),
-
-
-                              )
+process.demo = cms.EDAnalyzer('EGammaNtuples')
 
 process.p = cms.Path(process.demo)
