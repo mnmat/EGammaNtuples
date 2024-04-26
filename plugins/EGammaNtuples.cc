@@ -933,6 +933,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for (auto& sc: bScs){
       fillRegDataEcalV1(sc,*ebRecHitsHandle,gPs[i]);
       fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,gPs[i]);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
       i++;
     }
     std::cout << "Done with ECAL trees" << std::endl;
@@ -940,6 +941,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     for (auto& sc: eScs){
       fillRegDataHGCALV1(sc, gPs[i]); 
       fillRegDataHGCALHLTV1(sc,gPs[i]);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
       i++;
     }
 
