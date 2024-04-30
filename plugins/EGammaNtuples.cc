@@ -982,6 +982,7 @@ void EGammaNtuples::beginJob() {
   
   egRun3Tree->Branch("eg_et", &eg_et);
   egRun3Tree->Branch("eg_energy", &eg_energy);
+  egRun3Tree->Branch("eg_regressedEnergy", &sc_regressedEnergy);
   egRun3Tree->Branch("eg_rawEnergy", &sc_rawEnergy);
   egRun3Tree->Branch("eg_eta", &eg_eta);
   egRun3Tree->Branch("eg_phi", &eg_phi);
@@ -1008,6 +1009,7 @@ void EGammaNtuples::beginJob() {
   // egRegDataEcalV1Tree
   egRegDataEcalV1Tree->Branch("nrVert", &ecalV1_nrVert);
   egRegDataEcalV1Tree->Branch("rawEnergy", &ecalV1_rawEnergy);
+  egRegDataEcalV1Tree->Branch("regressedEnergy", &ecalV1_regressedEnergy);
   egRegDataEcalV1Tree->Branch("etaWidth", &ecalV1_etaWidth);
   egRegDataEcalV1Tree->Branch("phiWidth", &ecalV1_phiWidth);
   egRegDataEcalV1Tree->Branch("rvar", &ecalV1_rvar);
@@ -1046,6 +1048,7 @@ void EGammaNtuples::beginJob() {
   egRegDataEcalHLTV1Tree->Branch("nrHitsThreshold", &ecalHLTV1_nrHitsThreshold);
   egRegDataEcalHLTV1Tree->Branch("eta", &ecalHLTV1_eta);
   egRegDataEcalHLTV1Tree->Branch("rawEnergy", &ecalHLTV1_rawEnergy);
+  egRegDataEcalHLTV1Tree->Branch("regressedEnergy", &ecalHLTV1_regressedEnergy);
   egRegDataEcalHLTV1Tree->Branch("phiWidth", &ecalHLTV1_phiWidth);
   egRegDataEcalHLTV1Tree->Branch("rvar", &ecalHLTV1_rvar);
   egRegDataEcalHLTV1Tree->Branch("numberOfSubClusters", &ecalHLTV1_numberOfSubClusters);
@@ -1058,6 +1061,7 @@ void EGammaNtuples::beginJob() {
 
   // egRegDataHGCALV1Tree
   egRegDataHGCALV1Tree->Branch("rawEnergy", &hgcalV1_rawEnergy);
+  egRegDataHGCALV1Tree->Branch("regressedEnergy", &hgcalV1_regressedEnergy);
   egRegDataHGCALV1Tree->Branch("eta", &hgcalV1_eta);
   egRegDataHGCALV1Tree->Branch("etaWidth", &hgcalV1_etaWidth);
   egRegDataHGCALV1Tree->Branch("phiWidth", &hgcalV1_phiWidth);
@@ -1082,6 +1086,7 @@ void EGammaNtuples::beginJob() {
 
  // egRegDataHGCALHLTV1Tree
   egRegDataHGCALHLTV1Tree->Branch("rawEnergy", &hgcalHLTV1_rawEnergy);
+  egRegDataHGCALHLTV1Tree->Branch("regressedEnergy", &hgcalHLTV1_regressedEnergy);
   egRegDataHGCALHLTV1Tree->Branch("eta", &hgcalHLTV1_eta);
   egRegDataHGCALHLTV1Tree->Branch("phiWidth", &hgcalHLTV1_phiWidth);
   egRegDataHGCALHLTV1Tree->Branch("numberOfSubClusters", &hgcalHLTV1_numberOfSubClusters);
