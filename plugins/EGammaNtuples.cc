@@ -172,7 +172,7 @@ private:
   
   TFile *newfile = new TFile("output.root", "RECREATE","",207);
   TTree* egRun3Tree = new TTree("egHLTRun3Tree","egHLTRun3Tree");
-  TTree* egRun4CompleteTree = new TTree("egOfflineRun4Tree","egOfflineRun4Tree")
+  TTree* egRun4CompleteTree = new TTree("egOfflineRun4Tree","egOfflineRun4Tree");
   TTree* egRegDataEcalV1Tree = new TTree("egRegDataEcalV1","egRegDataEcalV1");
   TTree* egRegDataEcalHLTV1Tree = new TTree("egRegDataEcalHLTV1","egRegDataEcalHLTV1");
   TTree* egRegDataHGCALV1Tree = new TTree("egRegDataHGCALV1","egRegDataHGCALV1");
@@ -679,8 +679,8 @@ void EGammaNtuples::fillRegDataEcalV1(const reco::SuperCluster& sc,  const EcalR
 
   ecalV1_eg_sigmaIEtaIEta = eg_sigmaIEtaIEta;  
   ecalV1_eg_sigmaIPhiIPhi = eg_sigmaIPhiIPhi;  
-  ecalV1_isEB = true;
-  ecalV1_isEE = false;
+  ecalV1_sc_isEB = true;
+  ecalV1_sc_isEE = false;
 
   egRegDataEcalV1Tree->Fill();
 }
@@ -718,10 +718,10 @@ void EGammaNtuples::fillRegDataEcalHLTV1(const reco::SuperCluster& sc,const Ecal
   ecalHLTV1_gen_phi = gPs.phi();
   ecalHLTV1_gen_vz = gPs.vz();
 
-  ecalHLTV1_eg_sigmaIEtaIEta = sigmaIEtaIEta;  
-  ecalHLTV1_eg_sigmaIPhiIPhi = sigmaIPhiIPhi;  
-  ecalHLTV1_isEB = true;
-  ecalHLTV1_isEE = false;
+  ecalHLTV1_eg_sigmaIEtaIEta = sigmaIetaIeta;  
+  ecalHLTV1_eg_sigmaIPhiIPhi = sigmaIphiIphi;  
+  ecalHLTV1_sc_isEB = true;
+  ecalHLTV1_sc_isEE = false;
 
   egRegDataEcalHLTV1Tree->Fill();
 }
@@ -765,8 +765,8 @@ void EGammaNtuples::fillRegDataHGCALV1(const reco::SuperCluster& sc, const reco:
 
   hgcalV1_eg_sigmaIEtaIEta = 0;  
   hgcalV1_eg_sigmaIPhiIPhi = 0;  
-  hgcalV1_isEB = false;
-  hgcalV1_isEE = true;
+  hgcalV1_sc_isEB = false;
+  hgcalV1_sc_isEE = true;
 
   egRegDataHGCALV1Tree->Fill();
 }
@@ -792,8 +792,8 @@ void EGammaNtuples::fillRegDataHGCALHLTV1(const reco::SuperCluster& sc, const re
 
   hgcalHLTV1_eg_sigmaIEtaIEta = 0;  
   hgcalHLTV1_eg_sigmaIPhiIPhi = 0;  
-  hgcalHLTV1_isEB = false;
-  hgcalHLTV1_isEE = true;
+  hgcalHLTV1_sc_isEB = false;
+  hgcalHLTV1_sc_isEE = true;
 
   egRegDataHGCALHLTV1Tree->Fill();
 }
@@ -1166,7 +1166,6 @@ void EGammaNtuples::beginJob() {
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_eta", &hgcalHLTV1_gen_eta);
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_phi", &hgcalHLTV1_gen_phi);
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_vz", &hgcalHLTV1_gen_vz);
-  egRegDataHGCALV1Tree->Branch("eg_isEB",&hgcal_isEB);
 
   egRegDataHGCALHLTV1Tree->Branch("eg_isEB", &hgcalHLTV1_sc_isEB);
   egRegDataHGCALHLTV1Tree->Branch("eg_isEE", &hgcalHLTV1_sc_isEE);
