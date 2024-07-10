@@ -1,4 +1,4 @@
-#include "RecoEgamma/EgammaTools/interface/HGCalShowerShapeHelper_Dummy_Dummy.h"
+#include "RecoEgamma/EgammaTools/interface/HGCalShowerShapeHelper_Dummy.h"
 
 #include <Math/Vector3D.h>
 #include <TMatrixD.h>
@@ -6,10 +6,10 @@
 
 #include <algorithm>
 
-const double HGCalShowerShapeHelper_Dummy_Dummy::kLDWaferCellSize_ = 0.698;
-const double HGCalShowerShapeHelper_Dummy_Dummy::kHDWaferCellSize_ = 0.465;
+const double HGCalShowerShapeHelper_Dummy::kLDWaferCellSize_ = 0.698;
+const double HGCalShowerShapeHelper_Dummy::kHDWaferCellSize_ = 0.465;
 
-HGCalShowerShapeHelper_Dummy_Dummy::ShowerShapeCalc::ShowerShapeCalc(
+HGCalShowerShapeHelper_Dummy::ShowerShapeCalc::ShowerShapeCalc(
     std::shared_ptr<const hgcal::RecHitTools> recHitTools,
     //std::shared_ptr<const std::unordered_map<uint32_t, const reco::PFRecHit *>> pfRecHitPtrMap,
     std::map<DetId, const HGCRecHit*>> hitMap,
