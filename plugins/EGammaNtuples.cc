@@ -172,6 +172,7 @@ private:
   
   TFile *newfile = new TFile("output.root", "RECREATE","",207);
   TTree* egRun3Tree = new TTree("egHLTRun3Tree","egHLTRun3Tree");
+  TTree* egRun4CompleteTree = new TTree("egOfflineRun4Tree","egOfflineRun4Tree")
   TTree* egRegDataEcalV1Tree = new TTree("egRegDataEcalV1","egRegDataEcalV1");
   TTree* egRegDataEcalHLTV1Tree = new TTree("egRegDataEcalHLTV1","egRegDataEcalHLTV1");
   TTree* egRegDataHGCALV1Tree = new TTree("egRegDataHGCALV1","egRegDataHGCALV1");
@@ -261,6 +262,11 @@ private:
   float ecalV1_gen_phi;
   float ecalV1_gen_vz;
 
+  float ecalV1_eg_sigmaIEtaIEta;  
+  float ecalV1_eg_sigmaIPhiIPhi;
+  int ecalV1_sc_isEB;
+  int ecalV1_sc_isEE; 
+
   // egRegDataEcalHLTV1 Features
 
   int ecalHLTV1_run_nr;
@@ -282,6 +288,11 @@ private:
   float ecalHLTV1_gen_eta;
   float ecalHLTV1_gen_phi;
   float ecalHLTV1_gen_vz;
+
+  float ecalHLTV1_eg_sigmaIEtaIEta;  
+  float ecalHLTV1_eg_sigmaIPhiIPhi;
+  int ecalHLTV1_sc_isEB;
+  int ecalHLTV1_sc_isEE; 
 
   // egRegDataHGCALV1 Features
 
@@ -313,6 +324,11 @@ private:
   float hgcalV1_gen_phi;
   float hgcalV1_gen_vz;
 
+  float hgcalV1_eg_sigmaIEtaIEta;  
+  float hgcalV1_eg_sigmaIPhiIPhi;
+  int hgcalV1_sc_isEB;
+  int hgcalV1_sc_isEE; 
+
   // egRegDataHGCALHLTV1 Features
 
   int hgcalHLTV1_run_nr;
@@ -333,6 +349,12 @@ private:
   float hgcalHLTV1_gen_eta;
   float hgcalHLTV1_gen_phi;
   float hgcalHLTV1_gen_vz;
+
+  float hgcalHLTV1_eg_sigmaIEtaIEta;  
+  float hgcalHLTV1_eg_sigmaIPhiIPhi;
+  int hgcalHLTV1_sc_isEB;
+  int hgcalHLTV1_sc_isEE; 
+  
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -654,6 +676,12 @@ void EGammaNtuples::fillRegDataEcalV1(const reco::SuperCluster& sc,  const EcalR
   ecalV1_gen_phi = gPs.phi();
   ecalV1_gen_vz = gPs.vz();
 
+
+  ecalV1_eg_sigmaIEtaIEta = eg_sigmaIEtaIEta;  
+  ecalV1_eg_sigmaIPhiIPhi = eg_sigmaIPhiIPhi;  
+  ecalV1_isEB = true;
+  ecalV1_isEE = false;
+
   egRegDataEcalV1Tree->Fill();
 }
 
@@ -665,6 +693,15 @@ void EGammaNtuples::fillRegDataEcalHLTV1(const reco::SuperCluster& sc,const Ecal
   const reco::CaloCluster& seedCluster = *(sc.seed());
   const bool iseb = seedCluster.hitsAndFractions()[0].first.subdetId() == EcalBarrel;
   //const EcalRecHitCollection* recHits = iseb ? recHitsEB_.product() : recHitsEE_.product();
+
+  const auto& localCovariances = EcalClusterTools::localCovariances(seedCluster, &recHits, caloTopology_);
+  float sigmaIetaIeta = sqrt(localCovariances[0]);
+  float sigmaIetaIphi = std::numeric_limits<float>::max();
+  float sigmaIphiIphi = std::numeric_limits<float>::max();
+
+  if (!edm::isNotFinite(localCovariances[2]))
+    sigmaIphiIphi = sqrt(localCovariances[2]);
+
 
   ecalHLTV1_nrHitsThreshold = nrHitsEB1GeV + nrHitsEE1GeV;
   ecalHLTV1_eta = sc.eta();
@@ -680,6 +717,11 @@ void EGammaNtuples::fillRegDataEcalHLTV1(const reco::SuperCluster& sc,const Ecal
   ecalHLTV1_gen_eta = gPs.eta();
   ecalHLTV1_gen_phi = gPs.phi();
   ecalHLTV1_gen_vz = gPs.vz();
+
+  ecalHLTV1_eg_sigmaIEtaIEta = sigmaIEtaIEta;  
+  ecalHLTV1_eg_sigmaIPhiIPhi = sigmaIPhiIPhi;  
+  ecalHLTV1_isEB = true;
+  ecalHLTV1_isEE = false;
 
   egRegDataEcalHLTV1Tree->Fill();
 }
@@ -721,6 +763,11 @@ void EGammaNtuples::fillRegDataHGCALV1(const reco::SuperCluster& sc, const reco:
   hgcalV1_gen_phi = gPs.phi();
   hgcalV1_gen_vz = gPs.vz();
 
+  hgcalV1_eg_sigmaIEtaIEta = 0;  
+  hgcalV1_eg_sigmaIPhiIPhi = 0;  
+  hgcalV1_isEB = false;
+  hgcalV1_isEE = true;
+
   egRegDataHGCALV1Tree->Fill();
 }
 
@@ -742,6 +789,11 @@ void EGammaNtuples::fillRegDataHGCALHLTV1(const reco::SuperCluster& sc, const re
   hgcalHLTV1_gen_eta = gPs.eta();
   hgcalHLTV1_gen_phi = gPs.phi();
   hgcalHLTV1_gen_vz = gPs.vz();
+
+  hgcalHLTV1_eg_sigmaIEtaIEta = 0;  
+  hgcalHLTV1_eg_sigmaIPhiIPhi = 0;  
+  hgcalHLTV1_isEB = false;
+  hgcalHLTV1_isEE = true;
 
   egRegDataHGCALHLTV1Tree->Fill();
 }
@@ -1044,6 +1096,11 @@ void EGammaNtuples::beginJob() {
   egRegDataEcalV1Tree->Branch("eg_gen_phi", &ecalV1_gen_phi);
   egRegDataEcalV1Tree->Branch("eg_gen_vz", &ecalV1_gen_vz);
 
+  egRegDataEcalV1Tree->Branch("eg_isEB", &ecalV1_sc_isEB);
+  egRegDataEcalV1Tree->Branch("eg_isEE", &ecalV1_sc_isEE);
+  egRegDataEcalV1Tree->Branch("eg_sigmaIEtaIEta", &ecalV1_eg_sigmaIEtaIEta);
+  egRegDataEcalV1Tree->Branch("eg_sigmaIPhiIPhi", &ecalV1_eg_sigmaIPhiIPhi);
+
   // egRegDataEcalHLTV1Tree
   egRegDataEcalHLTV1Tree->Branch("nrHitsThreshold", &ecalHLTV1_nrHitsThreshold);
   egRegDataEcalHLTV1Tree->Branch("eta", &ecalHLTV1_eta);
@@ -1058,6 +1115,11 @@ void EGammaNtuples::beginJob() {
   egRegDataEcalHLTV1Tree->Branch("eg_gen_eta", &ecalHLTV1_gen_eta);
   egRegDataEcalHLTV1Tree->Branch("eg_gen_phi", &ecalHLTV1_gen_phi);
   egRegDataEcalHLTV1Tree->Branch("eg_gen_vz", &ecalHLTV1_gen_vz);
+
+  egRegDataEcalHLTV1Tree->Branch("eg_isEB", &ecalHLTV1_sc_isEB);
+  egRegDataEcalHLTV1Tree->Branch("eg_isEE", &ecalHLTV1_sc_isEE);
+  egRegDataEcalHLTV1Tree->Branch("eg_sigmaIEtaIEta", &ecalHLTV1_eg_sigmaIEtaIEta);
+  egRegDataEcalHLTV1Tree->Branch("eg_sigmaIPhiIPhi", &ecalHLTV1_eg_sigmaIPhiIPhi);
 
   // egRegDataHGCALV1Tree
   egRegDataHGCALV1Tree->Branch("rawEnergy", &hgcalV1_rawEnergy);
@@ -1084,6 +1146,12 @@ void EGammaNtuples::beginJob() {
   egRegDataHGCALV1Tree->Branch("eg_gen_phi", &hgcalV1_gen_phi);
   egRegDataHGCALV1Tree->Branch("eg_gen_vz", &hgcalV1_gen_vz);
 
+  egRegDataHGCALV1Tree->Branch("eg_isEB", &hgcalV1_sc_isEB);
+  egRegDataHGCALV1Tree->Branch("eg_isEE", &hgcalV1_sc_isEE);
+  egRegDataHGCALV1Tree->Branch("eg_sigmaIEtaIEta", &hgcalV1_eg_sigmaIEtaIEta);
+  egRegDataHGCALV1Tree->Branch("eg_sigmaIPhiIPhi", &hgcalV1_eg_sigmaIPhiIPhi);
+
+
  // egRegDataHGCALHLTV1Tree
   egRegDataHGCALHLTV1Tree->Branch("rawEnergy", &hgcalHLTV1_rawEnergy);
   egRegDataHGCALHLTV1Tree->Branch("regressedEnergy", &hgcalHLTV1_regressedEnergy);
@@ -1098,7 +1166,12 @@ void EGammaNtuples::beginJob() {
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_eta", &hgcalHLTV1_gen_eta);
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_phi", &hgcalHLTV1_gen_phi);
   egRegDataHGCALHLTV1Tree->Branch("eg_gen_vz", &hgcalHLTV1_gen_vz);
+  egRegDataHGCALV1Tree->Branch("eg_isEB",&hgcal_isEB);
 
+  egRegDataHGCALHLTV1Tree->Branch("eg_isEB", &hgcalHLTV1_sc_isEB);
+  egRegDataHGCALHLTV1Tree->Branch("eg_isEE", &hgcalHLTV1_sc_isEE);
+  egRegDataHGCALHLTV1Tree->Branch("eg_sigmaIEtaIEta", &hgcalHLTV1_eg_sigmaIEtaIEta);
+  egRegDataHGCALHLTV1Tree->Branch("eg_sigmaIPhiIPhi", &hgcalHLTV1_eg_sigmaIPhiIPhi);
 
   // please remove this method if not needed
 }
