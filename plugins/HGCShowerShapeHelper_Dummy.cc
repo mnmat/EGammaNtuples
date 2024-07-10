@@ -1,4 +1,4 @@
-#include "PlayGround/EGammaNtuples/plugins/HGCalShowerShapeHelper_Dummy.h"
+#include "PlayGround/EGammaNtuples/plugins/HGCShowerShapeHelper_Dummy.h"
 
 #include <Math/Vector3D.h>
 #include <TMatrixD.h>
