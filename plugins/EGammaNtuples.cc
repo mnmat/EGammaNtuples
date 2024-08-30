@@ -135,6 +135,10 @@ private:
   void fillRegDataEcalHLTV1(const reco::SuperCluster& sc, const EcalRecHitCollection& recHits,const reco::GenParticle& gPs);
   void fillRegDataHGCALV1(const reco::SuperCluster& sc,const reco::GenParticle& gPs);
   void fillRegDataHGCALHLTV1(const reco::SuperCluster& sc,const reco::GenParticle& gPs);
+  std::vector<reco::GenParticle> getGenParticles(const std::vector<reco::GenParticle>& genParticles, std::string objType_);
+  reco::GenParticle getLastCopyPreFSR(reco::GenParticle part);
+  const reco::GenParticle* get_best_dr_match(const reco::SuperCluster& obj_to_match, const std::vector<reco::GenParticle>& genparts, double max_dr);
+
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
@@ -153,6 +157,7 @@ private:
   edm::EDGetTokenT<std::vector<reco::RecoEcalCandidate>> eGammaCandidatesToken_;
   edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
   edm::EDGetTokenT<reco::PFRecHitCollection> pfRecHitsHGCALToken_;
+  std::string pType_;
 
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
   edm::ESGetToken<CaloTopology, CaloTopologyRecord> caloTopoToken_;
@@ -367,6 +372,7 @@ EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
   eGammaCandidatesToken_(consumes<std::vector<reco::RecoEcalCandidate>>(iConfig.getParameter<edm::InputTag>("eGammaCandidates"))),
   verticesToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   pfRecHitsHGCALToken_(consumes<reco::PFRecHitCollection>(iConfig.getParameter<edm::InputTag>("pfHGCALRecHits"))),
+  pType_(iConfig.getParameter<std::string>("pType")),
   caloGeomToken_(esConsumes<CaloGeometry, CaloGeometryRecord>()),
   caloTopoToken_(esConsumes<CaloTopology, CaloTopologyRecord>()){
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
@@ -726,13 +732,14 @@ void EGammaNtuples::fillRegDataHGCALV1(const reco::SuperCluster& sc, const reco:
 
 void EGammaNtuples::fillRegDataHGCALHLTV1(const reco::SuperCluster& sc, const reco::GenParticle& gPs) {
   const float clusterMaxDR = getMaxDRNonSeedCluster(sc).second;
-  auto ssCalc = hgcalShowerShapes_.createCalc(sc);
+  //auto ssCalc = hgcalShowerShapes_.createCalc(sc);
 
   hgcalHLTV1_nrHitsThreshold = nrHitsEB1GeV + nrHitsEE1GeV;
   hgcalHLTV1_eta = sc.eta();
   hgcalHLTV1_phiWidth = sc.phiWidth();
   hgcalHLTV1_numberOfSubClusters = std::max(0, static_cast<int>(sc.clusters().size()) - 1);
-  hgcalHLTV1_rvar = ssCalc.getRvar(hgcalCylinderR_);
+  //hgcalHLTV1_rvar = ssCalc.getRvar(hgcalCylinderR_);
+  hgcalHLTV1_rvar = cal_r28(sc,true);
   hgcalHLTV1_clusterMaxDR = clusterMaxDR;
   hgcalHLTV1_rawEnergy = sc.rawEnergy();
   hgcalHLTV1_regressedEnergy = sc.energy();
@@ -904,6 +911,66 @@ void EGammaNtuples::fillHitMap(std::map<DetId, const HGCRecHit*>& hitMap,
   }
 } // end of EfficiencyStudies::fillHitMap
 
+
+std::vector<reco::GenParticle> EGammaNtuples::getGenParticles(const std::vector<reco::GenParticle>& genParticles, std::string objType_) {
+  std::vector<reco::GenParticle> objects;  // vector to be filled
+  // we need to ge the ID corresponding to the desired GenParticle type
+  int pdgID = -1;  // setting to -1 should not be needed, but prevents the compiler warning :)
+  if (objType_ == "ele")
+    pdgID = 11;
+  else if (objType_ == "pho")
+    pdgID = 22;
+
+  // main loop over GenParticles
+  //for (size_t i = 0; i < genParticles->size(); ++i) {
+  for (auto& p : genParticles){
+    //const reco::GenParticle p = (*genParticles)[i];
+
+    // only GenParticles with correct ID
+    if (std::abs(p.pdgId()) != pdgID){
+      std::cout << "pdgID not found!" << std::endl;
+      continue;
+    }
+
+    // checking if particle comes from "hard process"
+    if (p.isHardProcess()) {
+      // depending on the particle type, last particle before or after FSR is chosen
+      objects.emplace_back(getLastCopyPreFSR(p));
+    }
+    else {
+      if (p.numberOfMothers()==0 && std::abs(p.pdgId()) == pdgID){
+        objects.emplace_back(p);
+      }
+    }
+  }
+  return objects;
+}
+
+reco::GenParticle EGammaNtuples::getLastCopyPreFSR(reco::GenParticle part) {
+  const auto& daughters = part.daughterRefVector();
+  if (daughters.size() == 1 && daughters.at(0)->pdgId() == part.pdgId())
+    return getLastCopyPreFSR(*daughters.at(0).get());  // recursion, whooo
+  else
+    return part;
+}
+
+
+const reco::GenParticle* EGammaNtuples::get_best_dr_match(const reco::SuperCluster& obj_to_match, const std::vector<reco::GenParticle>& genparts, double max_dr){
+  const reco::GenParticle* matched_obj = NULL; 
+
+  auto best_dr2 = max_dr*max_dr;
+  auto eta = obj_to_match.eta();
+  auto phi = obj_to_match.phi();
+  for (auto& obj: genparts){
+    auto dr2 = reco::deltaR2(eta,phi,obj.eta(),obj.phi());
+    if (dr2 < best_dr2){
+      best_dr2 = dr2;
+      matched_obj = &obj;
+    }
+  }
+  return matched_obj;
+}
+
 // ------------ method called for each event  ------------
 void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
@@ -925,39 +992,42 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   iEvent.getByToken(ebRecHitsToken_, ebRecHitsHandle);
   edm::Handle<HGCRecHitCollection> eeRecHitsHandle;
   iEvent.getByToken(eeRecHitsToken_, eeRecHitsHandle);
-  edm::Handle<reco::PFRecHitCollection> pfRecHitsHGCALHandle;
-  iEvent.getByToken(pfRecHitsHGCALToken_, pfRecHitsHGCALHandle);
+  //edm::Handle<reco::PFRecHitCollection> pfRecHitsHGCALHandle;
+  //iEvent.getByToken(pfRecHitsHGCALToken_, pfRecHitsHGCALHandle);
 
   std::vector<reco::SuperCluster> scs(bScs.size() + eScs.size()); 
   std::merge(bScs.begin(), bScs.end(), eScs.begin(), eScs.end(), scs.begin());
 
   std::cout << "Initialize Showershapes" << std::endl;
-  hgcalShowerShapes_.initPerSetup(iSetup);
-  hgcalShowerShapes_.initPerEvent(*pfRecHitsHGCALHandle);
-  std::cout << (*pfRecHitsHGCALHandle).size() << std::endl;
+  //hgcalShowerShapes_.initPerSetup(iSetup);
+  //hgcalShowerShapes_.initPerEvent(*pfRecHitsHGCALHandle);
+  //std::cout << (*pfRecHitsHGCALHandle).size() << std::endl;
   nrHitsEB1GeV = countRecHits(ebRecHitsHandle, hitsEnergyThreshold_);
   nrHitsEE1GeV = countRecHits(eeRecHitsHandle, hitsEnergyThreshold_);
   iEvent.getByToken(verticesToken_, vertices_);
 
+
   if (gPs.size() == 2 && scs.size()==2){
-    int i = 0;
+    auto objs = getGenParticles(gPs,pType_);
     for (auto& sc: bScs){
-      fillRegDataEcalV1(sc,*ebRecHitsHandle,gPs[i]);
-      fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,gPs[i]);
-      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
-      i++;
+      const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
+      if (matched_gp!= NULL){
+        //fillRegDataEcalV1(sc,*ebRecHitsHandle,*matched_gp);
+        //fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
+        fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
+        std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
+      }
     }
     std::cout << "Done with ECAL trees" << std::endl;
-    i = 0;
     for (auto& sc: eScs){
-      fillRegDataHGCALV1(sc, gPs[i]); 
-      fillRegDataHGCALHLTV1(sc,gPs[i]);
-      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
-      i++;
+      const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
+      if (matched_gp!= NULL){
+        //fillRegDataHGCALV1(sc, *matched_gp); 
+        fillRegDataHGCALHLTV1(sc,*matched_gp);
+        std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
+      }
     }
-
     std::cout << "Done with HGCAL trees" << std::endl;
-
   }
 
 
@@ -1136,6 +1206,7 @@ void EGammaNtuples::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<edm::InputTag>("eGammaCandidates", edm::InputTag("hltEgammaCandidatesL1Seeded"));
   desc.add<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   desc.add<edm::InputTag>("pfHGCALRecHits", edm::InputTag("particleFlowRecHitHGC"));
+  desc.add<std::string>("pType","ele");
   descriptions.add("EGammaNtuples",desc);
 
 
