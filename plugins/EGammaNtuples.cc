@@ -32,6 +32,8 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HLTReco/interface/EgammaObject.h"
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
 
 //
 // class declaration
@@ -58,6 +60,8 @@ private:
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticleToken_;
+  edm::EDGetTokenT<std::vector<trigger::EgammaObject>> eGammaObjectToken_;
+  edm::EDGetTokenT<std::vector<trigger::EgammaObject>> eGammaObjectUnseededToken_;
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   edm::ESGetToken<SetupData, SetupRecord> setupToken_;
@@ -76,7 +80,9 @@ private:
 // constructors and destructor
 //
 EGammaNtuples::EGammaNtuples(const edm::ParameterSet& iConfig)
-  : genParticleToken_(consumes<std::vector<reco::GenParticle>>(iConfig.getUntrackedParameter<edm::InputTag>("genParticles"))){
+  : genParticleToken_(consumes<std::vector<reco::GenParticle>>(iConfig.getUntrackedParameter<edm::InputTag>("genParticles"))),
+  eGammaObjectToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjects"))),
+  eGammaObjectUnseededToken_(consumes<std::vector<trigger::EgammaObject>>(iConfig.getUntrackedParameter<edm::InputTag>("eGammaObjectsUnSeeded"))){
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   setupDataToken_ = esConsumes<SetupData, SetupRecord>();
 #endif
@@ -109,10 +115,21 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   // Gen Particle
   std::cout << "----- Gen Particles ----- " << std::endl;
   for (const auto& gp: iEvent.get(genParticleToken_)){
-    std::cout << "Energy: " << gp.energy() << ", PT: " << gp.pt() << ", Eta: " << gp.eta() << ", Phi: " << gp.phi() << ", Vz: " << gp.vz() << std::endl;
+    std::cout << "Energy: " << gp.energy() << std::endl;
+    std::cout << "PT: " << gp.pt() << std::endl;
+    std::cout << "Eta: " << gp.eta() << std::endl;
+    std::cout << "Phi: " << gp.phi() << std::endl;
+    std::cout << "Vz: " << gp.vz() << std::endl;
   }
 
-
+  // Eg Object
+  std::cout << "----- Egamma Particles ----- " << std::endl;
+  for (const auto& egobj: iEvent.get(eGammaObjectToken_)){
+    std::cout << "Energy: " << egobj.energy() << std::endl;
+    std::cout << "ET: "<< egobj.et() << std::endl;
+    std::cout << "Eta: "<< egobj.eta() << std::endl;
+    std::cout << "Phi: "<< egobj.phi() << std::endl;
+  }
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
   // if the SetupData is always needed
