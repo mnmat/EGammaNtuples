@@ -1193,8 +1193,8 @@ void EGammaNtuples::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<edm::InputTag>("genParticles",edm::InputTag("genParticles"));
   desc.add<edm::InputTag>("eGammaObjects", edm::InputTag("hltEgammaHLTExtra",""));
   desc.add<edm::InputTag>("eGammaObjectsUnSeeded",edm::InputTag("hltEgammaHLTExtra","Unseeded"));
-  desc.add<edm::InputTag>("scBarrelL1Seeded", edm::InputTag("hltParticleFlowSuperClusterECALL1Seeded","hltParticleFlowSuperClusterECALBarrel"));
-  desc.add<edm::InputTag>("scHGCalL1Seeded", edm::InputTag("particleFlowSuperClusterHGCalFromTICLL1Seeded",""));
+  desc.add<edm::InputTag>("scBarrelL1Seeded", edm::InputTag("hltParticleFlowSuperClusterECALL1Seeded","particleFlowSuperClusterECALBarrel"));
+  desc.add<edm::InputTag>("scHGCalL1Seeded", edm::InputTag("hltparticleFlowSuperClusterHGCalFromTICLL1Seeded",""));
   desc.add<edm::InputTag>("ebRecHits", edm::InputTag("hltEgammaHLTExtra","EcalRecHitsEB"));
   desc.add<edm::InputTag>("eeRecHits", edm::InputTag("HGCalRecHit","HGCEERecHits"));
   desc.add<edm::InputTag>("sigmaIEtaIEta", edm::InputTag("hltEgammaClusterShapeL1Seeded","sigmaIEtaIEta5x5"));
