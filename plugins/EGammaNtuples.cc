@@ -79,6 +79,9 @@
 using namespace reco;
 
 namespace {
+
+  typedef edm::SortedCollection<HGCRecHit> HGCRecHitCollectionOld;
+
   //bool is if a valid dr was found, float is the dr
   std::pair<bool, float> getMaxDRNonSeedCluster(const reco::SuperCluster& sc) {
     float maxDR2 = 0.;
@@ -128,7 +131,7 @@ private:
   float cal_r9(const reco::SuperCluster&, const EcalRecHitCollection&, const CaloTopology&, const bool);
   float cal_r28(const reco::SuperCluster&, const bool);
   virtual void fillHitMap(std::map<DetId, const HGCRecHit*>& hitMap, 
-      const HGCRecHitCollection& rechitsHGCEE) const;
+      const HGCRecHitCollectionOld& rechitsHGCEE) const;
   std::vector<DetId> getNeighbors(const DetId, const float, const CaloSubdetectorGeometry*);
   void fillRegDataEGRun3Tree(const edm::Event& iEvent, const edm::EventSetup& iSetup);
   void fillRegDataEcalV1(const reco::SuperCluster& sc, const EcalRecHitCollection& recHits,const reco::GenParticle& gPs);
@@ -415,7 +418,7 @@ void EGammaNtuples::fillRegDataEGRun3Tree(const edm::Event& iEvent, const edm::E
   edm::Handle<EcalRecHitCollection> ebRecHitsHandle;  
   iEvent.getByToken(ebRecHitsToken_, ebRecHitsHandle);
 
-  edm::Handle<HGCRecHitCollection> eeRecHitsHandle;
+  edm::Handle<HGCRecHitCollectionOld> eeRecHitsHandle;
   iEvent.getByToken(eeRecHitsToken_, eeRecHitsHandle);
 
   edm::Handle<reco::RecoEcalCandidateIsolationMap> sigmaIEtaIEtaHandle;
@@ -904,7 +907,7 @@ bool EGammaNtuples::isEE(const reco::SuperCluster& sc){
 }
 
 void EGammaNtuples::fillHitMap(std::map<DetId, const HGCRecHit*>& hitMap,
-                                const HGCRecHitCollection& rechitsHGCEE) const {
+                                const HGCRecHitCollectionOld& rechitsHGCEE) const {
   hitMap.clear();
   for (const auto& hit : rechitsHGCEE) {
     hitMap.emplace(hit.detid(), &hit);
@@ -990,7 +993,7 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   edm::Handle<EcalRecHitCollection> ebRecHitsHandle;  
   iEvent.getByToken(ebRecHitsToken_, ebRecHitsHandle);
-  edm::Handle<HGCRecHitCollection> eeRecHitsHandle;
+  edm::Handle<HGCRecHitCollectionOld> eeRecHitsHandle;
   iEvent.getByToken(eeRecHitsToken_, eeRecHitsHandle);
   //edm::Handle<reco::PFRecHitCollection> pfRecHitsHGCALHandle;
   //iEvent.getByToken(pfRecHitsHGCALToken_, pfRecHitsHGCALHandle);
@@ -1007,28 +1010,28 @@ void EGammaNtuples::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   iEvent.getByToken(verticesToken_, vertices_);
 
 
-  if (gPs.size() == 2 && scs.size()==2){
-    auto objs = getGenParticles(gPs,pType_);
-    for (auto& sc: bScs){
-      const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
-      if (matched_gp!= NULL){
-        //fillRegDataEcalV1(sc,*ebRecHitsHandle,*matched_gp);
-        //fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
-        fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
-        std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
-      }
+  auto objs = getGenParticles(gPs,pType_);
+  std::cout << objs.size() << std::endl;
+  for (auto& sc: bScs){
+    const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
+    if (matched_gp!= NULL){
+      //fillRegDataEcalV1(sc,*ebRecHitsHandle,*matched_gp);
+      //fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
+      fillRegDataEcalHLTV1(sc,*ebRecHitsHandle,*matched_gp);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
     }
-    std::cout << "Done with ECAL trees" << std::endl;
-    for (auto& sc: eScs){
-      const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
-      if (matched_gp!= NULL){
-        //fillRegDataHGCALV1(sc, *matched_gp); 
-        fillRegDataHGCALHLTV1(sc,*matched_gp);
-        std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
-      }
-    }
-    std::cout << "Done with HGCAL trees" << std::endl;
   }
+  std::cout << "Done with ECAL trees" << std::endl;
+  for (auto& sc: eScs){
+    const reco::GenParticle* matched_gp = get_best_dr_match(sc,objs,0.1);
+    if (matched_gp!= NULL){
+      //fillRegDataHGCALV1(sc, *matched_gp); 
+      fillRegDataHGCALHLTV1(sc,*matched_gp);
+      std::cout << sc.rawEnergy() << ", " << sc.energy() << ", " << sc.correctedEnergy() << ", " << sc.correctedEnergyUncertainty()<< std::endl;
+    }
+  }
+  std::cout << "Done with HGCAL trees" << std::endl;
+  
 
 
 #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
