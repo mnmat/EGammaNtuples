@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 def customiseHLTForEGammaNtuples(process):
 
     process.EGammaNtuples = EGammaNtuples.clone(
-        pType = "ele"
+        pType = "ele",
     )
 
     process.FEVTDEBUGHLToutput_step = cms.EndPath(
