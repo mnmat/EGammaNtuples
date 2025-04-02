@@ -7,6 +7,9 @@ def customiseHLTForEGammaNtuples(process):
         pType = "ele",
     )
 
+    from Configuration.ProcessModifiers.ticl_v5_cff import ticl_v5
+    ticl_v5.toModify(process.EGammaNtuples, scHGCalL1Seeded = cms.InputTag('hltTiclEGammaSuperClusterProducerUnseeded'))
+
     process.FEVTDEBUGHLToutput_step = cms.EndPath(
         process.FEVTDEBUGHLToutput + process.EGammaNtuples)
     return process
